@@ -44,7 +44,7 @@ serve(async (req) => {
     }
 
     // If Resend API key is configured, use it
-    if (RESEND_API_KEY) {
+    if (RESEND_API_KEY && RESEND_API_KEY.startsWith('re_')) {
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -98,10 +98,17 @@ serve(async (req) => {
         }),
       })
 
-      const emailData = await emailResponse.json()
+      let emailData
+      try {
+        emailData = await emailResponse.json()
+      } catch (e) {
+        // If response is not JSON, get text instead
+        const text = await emailResponse.text()
+        throw new Error(`Resend API error: ${emailResponse.status} ${emailResponse.statusText} - ${text}`)
+      }
 
       if (!emailResponse.ok) {
-        throw new Error(emailData.message || 'Failed to send email')
+        throw new Error(emailData.message || emailData.error || `Resend API returned ${emailResponse.status}: ${JSON.stringify(emailData)}`)
       }
 
       return new Response(
@@ -117,15 +124,20 @@ serve(async (req) => {
         }
       )
     } else {
-      // Fallback: Return success but log that email service is not configured
-      console.log('Email service not configured. Email would be sent to:', to)
+      // Fallback: Return error if API key is missing or invalid
+      const errorMsg = !RESEND_API_KEY 
+        ? 'RESEND_API_KEY is not set. Please configure it as a secret.'
+        : `RESEND_API_KEY is invalid. Expected format: re_... but got: ${RESEND_API_KEY.substring(0, 10)}...`
+      
+      console.error('Email service not configured:', errorMsg)
       return new Response(
         JSON.stringify({ 
           success: false, 
+          error: errorMsg,
           message: 'Email service not configured. Please set RESEND_API_KEY environment variable.' 
         }),
         { 
-          status: 200, 
+          status: 400, 
           headers: { 
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
@@ -137,8 +149,17 @@ serve(async (req) => {
     }
   } catch (error) {
     console.error('Error sending email:', error)
+    const errorMessage = error.message || 'Unknown error occurred'
+    console.error('Error details:', {
+      message: errorMessage,
+      stack: error.stack,
+      name: error.name
+    })
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      }),
       { 
         status: 500, 
         headers: { 

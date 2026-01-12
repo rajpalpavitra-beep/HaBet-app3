@@ -244,17 +244,33 @@ function Friends() {
       if (functionError) {
         // Log the error for debugging
         console.error('Edge Function error:', functionError)
+        console.error('Error details:', functionError)
+        
+        // Try to get more details from the error
+        let errorMessage = functionError.message || 'Unknown error'
+        if (functionError.context) {
+          errorMessage += `\nContext: ${JSON.stringify(functionError.context)}`
+        }
         
         // Show the actual error to help debug
-        const errorMessage = functionError.message || JSON.stringify(functionError)
         alert(
           `Error sending email: ${errorMessage}\n\n` +
           `Please check:\n` +
           `1. Edge Function is deployed\n` +
           `2. Resend API key is set as secret\n` +
-          `3. Check browser console for details\n\n` +
+          `3. Check browser console (F12) for more details\n\n` +
           `For now, you can manually share this link: ${inviteLink}`
         )
+      } else if (data) {
+        // Check if the function returned success
+        if (data.success) {
+          alert(`Invitation email sent successfully to ${inviteEmail.trim()}!`)
+        } else {
+          alert(
+            `Email service not fully configured: ${data.message || 'Unknown issue'}\n\n` +
+            `For now, you can manually share this link: ${inviteLink}`
+          )
+        }
       } else {
         alert(`Invitation email sent successfully to ${inviteEmail.trim()}!`)
       }
