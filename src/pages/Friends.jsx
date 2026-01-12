@@ -231,30 +231,45 @@ function Friends() {
       const appName = 'HaBet'
 
       // Call the Edge Function directly using fetch
-      // Use service role key to bypass auth requirements
+      // Supabase Edge Functions require both apikey and Authorization headers
       const supabaseUrl = supabase.supabaseUrl || 'https://xecqmkmwtxutarpjahmg.supabase.co'
       const functionUrl = `${supabaseUrl}/functions/v1/send-invite-email`
       
-      // Get session to include user info in the request body
-      const { data: { session } } = await supabase.auth.getSession()
+      // Get fresh session with access token
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       
-      // Use anon key for apikey header (required by Supabase)
-      // The function itself doesn't require user auth - it just needs the apikey
+      if (sessionError || !session || !session.access_token) {
+        console.error('Session error:', sessionError)
+        setError('Please log in to send invitations. Session invalid.')
+        setInviteLoading(false)
+        return
+      }
+      
+      console.log('Calling function:', { 
+        url: functionUrl,
+        hasSession: !!session, 
+        hasToken: !!session.access_token,
+        tokenPreview: session.access_token?.substring(0, 20) + '...'
+      })
+      
+      // Call with both apikey and Authorization headers (both required by Supabase)
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'apikey': supabase.supabaseKey || '',
-          // Don't send Authorization header - let the function be public
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           to: inviteEmail.trim(),
           fromName: userName,
           inviteLink: inviteLink,
           appName: appName,
-          userId: user?.id || null, // Include user ID in body for logging
+          userId: user?.id || null,
         })
       })
+      
+      console.log('Response:', { status: response.status, statusText: response.statusText, ok: response.ok })
       
       let data = null
       let functionError = null
