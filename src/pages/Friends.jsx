@@ -242,24 +242,17 @@ function Friends() {
       })
 
       if (functionError) {
-        // Fallback: Use mailto link or show success message
-        // In production, you'd want to set up the Edge Function
-        console.log('Edge Function not available, using fallback')
+        // Log the error for debugging
+        console.error('Edge Function error:', functionError)
         
-        // Create mailto link as fallback
-        const subject = encodeURIComponent(`${userName} invited you to join ${appName}!`)
-        const body = encodeURIComponent(
-          `Hi!\n\n${userName} invited you to join ${appName} - a fun way to bet on your habits and stay accountable!\n\n` +
-          `Sign up here: ${inviteLink}\n\n` +
-          `Join us and start betting on your habits today! 🎯`
-        )
-        const mailtoLink = `mailto:${inviteEmail.trim()}?subject=${subject}&body=${body}`
-        
-        // For now, we'll show a success message and copy the invite link
-        // In production, you'd integrate with Resend, SendGrid, etc.
+        // Show the actual error to help debug
+        const errorMessage = functionError.message || JSON.stringify(functionError)
         alert(
-          `Invitation email would be sent to ${inviteEmail.trim()}!\n\n` +
-          `To enable email sending, set up a Supabase Edge Function or email service.\n\n` +
+          `Error sending email: ${errorMessage}\n\n` +
+          `Please check:\n` +
+          `1. Edge Function is deployed\n` +
+          `2. Resend API key is set as secret\n` +
+          `3. Check browser console for details\n\n` +
           `For now, you can manually share this link: ${inviteLink}`
         )
       } else {
