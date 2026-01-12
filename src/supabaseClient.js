@@ -10,8 +10,9 @@ const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ
 
 export const supabase = createClient(url, key)
 
-// Store the key for use in function calls
+// Store the key and URL for use in function calls
 supabase.supabaseKey = key
+supabase.supabaseUrl = url
 
 // Export a helper to check if Supabase is configured
 export const isSupabaseConfigured = () => {
