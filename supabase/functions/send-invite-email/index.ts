@@ -32,7 +32,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'HaBet <noreply@habet.app>', // Update with your verified domain
+          from: 'HaBet <onboarding@resend.dev>', // Using Resend's default domain - update to your custom domain when verified
           to: [to],
           subject: `${fromName || 'Someone'} invited you to join ${appName || 'HaBet'}!`,
           html: `
