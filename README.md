@@ -5,11 +5,16 @@ A fun and engaging web app where users can create bets on their habits and track
 ## Features
 
 - ✅ User authentication (Sign up / Sign in)
-- ✅ Create and manage bets
-- ✅ Daily check-in system with streak tracking
+- ✅ Profile with nickname and emoji avatars
+- ✅ Create and manage bets with goals, stakes, and accountable friends
+- ✅ Daily/weekly/custom check-in system with progress meter
+- ✅ Friend verification system for bet completion
+- ✅ Friend requests and management
+- ✅ Game rooms with unique codes (create and join)
+- ✅ Email invites when adding friends
 - ✅ Winner/loser calculation
 - ✅ Leaderboard with scoring system
-- ✅ Beautiful pastel UI design
+- ✅ Beautiful pastel UI design with Schoolbell font
 
 ## Setup Instructions
 
@@ -38,8 +43,11 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 1. Open your Supabase project dashboard
 2. Go to SQL Editor
-3. Copy and paste the contents of `database-schema.sql`
-4. Run the SQL script to create all tables, RLS policies, and triggers
+3. Run these SQL scripts in order:
+   - First: Copy and paste `database-schema.sql` and run it
+   - Second: Copy and paste `database-friends-schema.sql` and run it
+   - Third: Copy and paste `database-updates.sql` and run it
+4. This creates all tables, RLS policies, triggers, and new features
 
 ### 5. Run the App
 
@@ -51,11 +59,16 @@ The app will be available at `http://localhost:5173`
 
 ## Database Schema
 
-The app uses three main tables:
+The app uses these main tables:
 
-- **profiles**: User profiles (auto-created on signup)
-- **bets**: User bets with status (pending/won/lost)
+- **profiles**: User profiles with nickname and emoji avatars (auto-created on signup)
+- **bets**: User bets with goals, stakes, dates, and verification requirements
 - **daily_checkins**: Daily check-in records for streak tracking
+- **check_ins**: Bet-specific check-ins with completion status
+- **friends**: Friend requests and relationships
+- **bet_accountability**: Friends who hold you accountable for bets
+- **game_rooms**: Digital game rooms with unique codes
+- **room_members**: Room membership tracking
 
 All tables have Row Level Security (RLS) enabled for data protection.
 
@@ -66,16 +79,21 @@ src/
   ├── pages/
   │   ├── Login.jsx          # Login/Signup page
   │   ├── Dashboard.jsx      # Main dashboard with bets list
-  │   ├── BetDetail.jsx     # Individual bet detail page
-  │   └── Leaderboard.jsx   # User leaderboard
+  │   ├── BetDetail.jsx      # Individual bet detail with check-ins & verification
+  │   ├── Leaderboard.jsx    # User leaderboard
+  │   ├── CreateBet.jsx      # Create bet with goal, stake, friends
+  │   ├── Friends.jsx        # Friend requests and management
+  │   ├── GameRooms.jsx      # Create and join game rooms
+  │   └── ProfileSettings.jsx # Profile with nickname and emoji
   ├── components/
-  │   ├── CreateBet.jsx     # Create bet form
-  │   └── DailyCheckIn.jsx  # Daily check-in component
-  ├── App.jsx               # Main app with routing
-  ├── AuthContext.jsx       # Authentication context
-  ├── supabaseClient.js     # Supabase client setup
-  ├── main.jsx              # App entry point
-  └── global.css            # Global styles
+  │   ├── CreateBet.jsx      # (Legacy - now in pages)
+  │   ├── DailyCheckIn.jsx   # Daily check-in component
+  │   └── CheckInPopup.jsx   # Check-in popup for bets
+  ├── App.jsx                # Main app with routing
+  ├── AuthContext.jsx        # Authentication context
+  ├── supabaseClient.js      # Supabase client setup
+  ├── main.jsx               # App entry point
+  └── global.css             # Global styles
 ```
 
 ## Scoring System

@@ -7,6 +7,7 @@ import Leaderboard from './pages/Leaderboard'
 import CreateBet from './pages/CreateBet'
 import Friends from './pages/Friends'
 import GameRooms from './pages/GameRooms'
+import ProfileSettings from './pages/ProfileSettings'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -76,6 +77,14 @@ function App() {
           element={
             <ProtectedRoute>
               <GameRooms />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfileSettings />
             </ProtectedRoute>
           }
         />

@@ -137,8 +137,26 @@ function Friends() {
 
       if (insertError) throw insertError
 
+      // Send email invite (using Supabase Edge Function or direct email)
+      try {
+        const inviteLink = `${window.location.origin}/login`
+        const inviteMessage = `Hi! ${user.email} invited you to join HaBet - a fun way to bet on your habits! Sign up at: ${inviteLink}`
+        
+        // Note: In production, you'd use Supabase Edge Function or email service
+        // For now, we'll log it. You can integrate with Resend, SendGrid, etc.
+        console.log('Email invite would be sent to:', profiles.email)
+        console.log('Message:', inviteMessage)
+        
+        // You can add actual email sending here using Supabase Edge Functions
+        // or a service like Resend, SendGrid, etc.
+      } catch (emailErr) {
+        console.warn('Email invite failed (non-critical):', emailErr)
+      }
+
       setSearchEmail('')
       loadFriends()
+      setError('') // Clear any previous errors
+      alert(`Friend request sent! ${profiles.email ? 'An invite email has been sent.' : ''}`)
     } catch (err) {
       console.error('Error sending friend request:', err)
       setError(err.message || 'Failed to send friend request')

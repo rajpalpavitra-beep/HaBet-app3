@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
@@ -7,39 +7,124 @@ function CreateBet() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [goal, setGoal] = useState('')
+  const [stake, setStake] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [dailyGoal, setDailyGoal] = useState('10k steps')
+  const [selectedFriends, setSelectedFriends] = useState([])
+  const [friends, setFriends] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingFriends, setLoadingFriends] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (user) {
+      loadFriends()
+    }
+  }, [user])
+
+  const loadFriends = async () => {
+    try {
+      setLoadingFriends(true)
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`
+          *,
+          requester:profiles!friends_requester_id_fkey(id, nickname, emoji_avatar, email),
+          addressee:profiles!friends_addressee_id_fkey(id, nickname, emoji_avatar, email)
+        `)
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+        .eq('status', 'accepted')
+
+      if (error) throw error
+
+      // Get friend profiles
+      const friendIds = (data || []).map(f => 
+        f.requester_id === user.id ? f.addressee_id : f.requester_id
+      )
+
+      if (friendIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, nickname, emoji_avatar, email')
+          .in('id', friendIds)
+
+        if (profilesError) throw profilesError
+
+        const friendsWithProfiles = (data || []).map(f => {
+          const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
+          const profile = (profiles || []).find(p => p.id === friendId)
+          return {
+            ...f,
+            friendProfile: profile
+          }
+        })
+
+        setFriends(friendsWithProfiles)
+      } else {
+        setFriends([])
+      }
+    } catch (err) {
+      console.error('Error loading friends:', err)
+    } finally {
+      setLoadingFriends(false)
+    }
+  }
+
+  const toggleFriend = (friendId) => {
+    if (selectedFriends.includes(friendId)) {
+      setSelectedFriends(selectedFriends.filter(id => id !== friendId))
+    } else {
+      setSelectedFriends([...selectedFriends, friendId])
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     
-    if (!title.trim() || !startDate || !endDate || !dailyGoal.trim()) {
+    if (!title.trim() || !goal.trim() || !stake.trim() || !startDate || !endDate) {
       setError('Please fill in all required fields')
       return
     }
 
     try {
       setLoading(true)
-      const { data, error: insertError } = await supabase
+      
+      // Create bet
+      const { data: betData, error: insertError } = await supabase
         .from('bets')
         .insert([
           {
             user_id: user.id,
             title: title.trim(),
-            description: description.trim() || '',
+            description: '',
+            goal: goal.trim(),
+            stake: stake.trim(),
+            start_date: startDate,
             target_date: endDate,
-            status: 'pending'
+            status: 'pending',
+            verification_required: selectedFriends.length > 0
           }
         ])
         .select()
         .single()
 
       if (insertError) throw insertError
+
+      // Add accountable friends if any selected
+      if (selectedFriends.length > 0) {
+        const accountabilityRecords = selectedFriends.map(friendId => ({
+          bet_id: betData.id,
+          friend_id: friendId
+        }))
+
+        const { error: accountabilityError } = await supabase
+          .from('bet_accountability')
+          .insert(accountabilityRecords)
+
+        if (accountabilityError) throw accountabilityError
+      }
 
       navigate('/')
     } catch (err) {
@@ -48,24 +133,6 @@ function CreateBet() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const formatDateForInput = (date) => {
-    if (!date) return ''
-    const d = new Date(date)
-    const year = d.getFullYear()
-    const month = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${year}-${month}-${day}`
-  }
-
-  const formatDateForDisplay = (dateString) => {
-    if (!dateString) return ''
-    const date = new Date(dateString)
-    const day = String(date.getDate()).padStart(2, '0')
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}/${month}/${year}`
   }
 
   return (
@@ -88,7 +155,7 @@ function CreateBet() {
           ← Back
         </button>
 
-        <div className="card" style={{ maxWidth: '600px', margin: '0 auto', borderRadius: '24px' }}>
+        <div className="card" style={{ maxWidth: '700px', margin: '0 auto', borderRadius: '24px' }}>
           <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
             Create New Bet 🚀
           </h1>
@@ -118,18 +185,19 @@ function CreateBet() {
                   backgroundColor: 'white',
                   width: '100%'
                 }}
-                placeholder="I week treat in cafe"
+                placeholder="e.g., Exercise every day"
               />
             </div>
 
             <div className="flex flex-col" style={{ gap: '0.75rem' }}>
               <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
-                Description
+                Set a Goal *
               </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows="4"
+              <input
+                type="text"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                required
                 style={{
                   borderRadius: '12px',
                   border: '2px solid #E8E8E8',
@@ -137,10 +205,31 @@ function CreateBet() {
                   fontSize: '1rem',
                   fontFamily: 'var(--font-handwritten)',
                   backgroundColor: 'white',
-                  resize: 'vertical',
                   width: '100%'
                 }}
-                placeholder="More details about the bet..."
+                placeholder="e.g., 10k steps daily, No social media, Read 30 min"
+              />
+            </div>
+
+            <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+              <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
+                Set a Stake *
+              </label>
+              <input
+                type="text"
+                value={stake}
+                onChange={(e) => setStake(e.target.value)}
+                required
+                style={{
+                  borderRadius: '12px',
+                  border: '2px solid #E8E8E8',
+                  padding: '0.875rem 1.25rem',
+                  fontSize: '1rem',
+                  fontFamily: 'var(--font-handwritten)',
+                  backgroundColor: 'white',
+                  width: '100%'
+                }}
+                placeholder="e.g., $50, Buy coffee for team, No dessert for a week"
               />
             </div>
 
@@ -186,26 +275,62 @@ function CreateBet() {
               </div>
             </div>
 
+            {/* Accountable Friends */}
             <div className="flex flex-col" style={{ gap: '0.75rem' }}>
               <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
-                Daily Goal *
+                Who Should Hold You Accountable?
               </label>
-              <input
-                type="text"
-                value={dailyGoal}
-                onChange={(e) => setDailyGoal(e.target.value)}
-                required
-                style={{
+              {loadingFriends ? (
+                <p style={{ color: 'var(--text-light)' }}>Loading friends...</p>
+              ) : friends.length === 0 ? (
+                <p style={{ color: 'var(--text-light)', padding: '1rem', backgroundColor: '#F9F9F9', borderRadius: '12px' }}>
+                  No friends yet. Add friends to hold you accountable!
+                </p>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
+                  padding: '1rem',
+                  backgroundColor: '#F9F9F9',
                   borderRadius: '12px',
-                  border: '2px solid #E8E8E8',
-                  padding: '0.875rem 1.25rem',
-                  fontSize: '1rem',
-                  fontFamily: 'var(--font-handwritten)',
-                  backgroundColor: '#F5F5F5',
-                  width: '100%'
-                }}
-                placeholder="10k steps"
-              />
+                  minHeight: '100px'
+                }}>
+                  {friends.map((friend) => {
+                    const friendId = friend.requester_id === user.id ? friend.addressee_id : friend.requester_id
+                    const profile = friend.friendProfile
+                    const isSelected = selectedFriends.includes(friendId)
+                    
+                    return (
+                      <button
+                        key={friend.id}
+                        type="button"
+                        onClick={() => toggleFriend(friendId)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '12px',
+                          border: isSelected ? '2px solid var(--pastel-pink)' : '2px solid #E8E8E8',
+                          backgroundColor: isSelected ? '#FFF' : 'white',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        <span style={{ fontSize: '1.5rem' }}>
+                          {profile?.emoji_avatar || '👤'}
+                        </span>
+                        <span>
+                          {profile?.nickname || profile?.email?.split('@')[0] || 'Friend'}
+                        </span>
+                        {isSelected && <span>✓</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>

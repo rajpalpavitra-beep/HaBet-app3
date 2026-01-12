@@ -115,21 +115,41 @@ function Dashboard() {
         </div>
 
         {/* Welcome Card */}
-        <div className="card mb-6" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
-            Welcome, {getDisplayName()}! 👋
-          </h2>
-          <p className="handwritten" style={{ 
-            fontSize: '1.2rem', 
-            color: 'var(--pastel-purple)', 
-            marginBottom: '0.25rem',
-            marginTop: '0.5rem'
-          }}>
-            {getUsername()}
-          </p>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-dark)', marginTop: '0.25rem' }}>
-            {user?.email}
-          </p>
+        <div className="card mb-6" style={{ borderRadius: '24px', cursor: 'pointer' }} onClick={() => navigate('/profile')}>
+          <div className="flex items-center gap-4">
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              backgroundColor: '#F5F5F5',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '3rem',
+              flexShrink: 0
+            }}>
+              {profile?.emoji_avatar || '👤'}
+            </div>
+            <div style={{ flex: 1 }}>
+              <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                Welcome, {profile?.nickname || getDisplayName()}! 👋
+              </h2>
+              <p className="handwritten" style={{ 
+                fontSize: '1.2rem', 
+                color: 'var(--pastel-purple)', 
+                marginBottom: '0.25rem',
+                marginTop: '0.5rem'
+              }}>
+                {getUsername()}
+              </p>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-dark)', marginTop: '0.25rem' }}>
+                {user?.email}
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
+                Tap to edit profile
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Feature Cards */}
