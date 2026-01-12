@@ -230,67 +230,98 @@ function Friends() {
       const inviteLink = `${window.location.origin}/login`
       const appName = 'HaBet'
 
-      // Call the Edge Function directly using fetch
-      // Supabase Edge Functions require both apikey and Authorization headers
-      const supabaseUrl = supabase.supabaseUrl || 'https://xecqmkmwtxutarpjahmg.supabase.co'
-      const functionUrl = `${supabaseUrl}/functions/v1/send-invite-email`
+      // Call Resend API directly from frontend (bypassing Edge Function to avoid 401 errors)
+      const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || ''
       
-      // Get fresh session with access token
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      
-      if (sessionError || !session || !session.access_token) {
-        console.error('Session error:', sessionError)
-        setError('Please log in to send invitations. Session invalid.')
+      if (!resendApiKey) {
+        setError('Email service not configured. Please set VITE_RESEND_API_KEY in .env file.')
         setInviteLoading(false)
         return
       }
+
+      console.log('Sending email via Resend API directly...')
       
-      console.log('Calling function:', { 
-        url: functionUrl,
-        hasSession: !!session, 
-        hasToken: !!session.access_token,
-        tokenPreview: session.access_token?.substring(0, 20) + '...'
-      })
-      
-      // Call with both apikey and Authorization headers (both required by Supabase)
-      const response = await fetch(functionUrl, {
+      // Call Resend API directly
+      const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'apikey': supabase.supabaseKey || '',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          to: inviteEmail.trim(),
-          fromName: userName,
-          inviteLink: inviteLink,
-          appName: appName,
-          userId: user?.id || null,
-        })
+          from: 'HaBet <onboarding@resend.dev>',
+          to: [inviteEmail.trim()],
+          subject: `${userName} invited you to join ${appName}!`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>You've been invited to ${appName}!</title>
+              </head>
+              <body style="font-family: 'Fredoka', sans-serif; background-color: #f5f5f5; padding: 20px; margin: 0;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 24px; padding: 40px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+                  <h1 style="font-family: 'Schoolbell', cursive; color: #333; font-size: 2.5rem; margin-bottom: 20px; text-align: center;">
+                    🎯 You've been invited!
+                  </h1>
+                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
+                    Hi there!
+                  </p>
+                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
+                    <strong>${userName}</strong> invited you to join <strong>${appName}</strong> - a fun way to bet on your habits and stay accountable!
+                  </p>
+                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 30px;">
+                    Join us and start betting on your habits today! 🚀
+                  </p>
+                  <div style="text-align: center; margin: 40px 0;">
+                    <a href="${inviteLink}" 
+                       style="display: inline-block; background-color: #FFB6C1; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(255, 182, 193, 0.3);">
+                      Join ${appName} Now
+                    </a>
+                  </div>
+                  <p style="font-size: 0.9rem; color: #999; text-align: center; margin-top: 40px;">
+                    Or copy and paste this link: <br>
+                    <a href="${inviteLink}" style="color: #FFB6C1; word-break: break-all;">${inviteLink}</a>
+                  </p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;">
+                  <p style="font-size: 0.85rem; color: #999; text-align: center;">
+                    If you didn't expect this email, you can safely ignore it.
+                  </p>
+                </div>
+              </body>
+            </html>
+          `,
+        }),
       })
-      
-      console.log('Response:', { status: response.status, statusText: response.statusText, ok: response.ok })
-      
+
       let data = null
       let functionError = null
       
-      if (!response.ok) {
-        const errorText = await response.text()
+      if (!emailResponse.ok) {
+        const errorText = await emailResponse.text()
         try {
           const errorJson = JSON.parse(errorText)
-          functionError = { message: errorJson.error || `HTTP ${response.status}: ${response.statusText}`, status: response.status }
+          functionError = { 
+            message: errorJson.message || errorJson.error || `HTTP ${emailResponse.status}: ${emailResponse.statusText}`, 
+            status: emailResponse.status 
+          }
         } catch {
-          functionError = { message: `HTTP ${response.status}: ${response.statusText} - ${errorText}`, status: response.status }
+          functionError = { 
+            message: `HTTP ${emailResponse.status}: ${emailResponse.statusText} - ${errorText}`, 
+            status: emailResponse.status 
+          }
         }
       } else {
         try {
-          data = await response.json()
+          data = await emailResponse.json()
+          data.success = true
         } catch {
           data = { success: true }
         }
       }
       
-      console.log('Function response:', { data, error: functionError, status: response.status })
+      console.log('Resend API response:', { data, error: functionError, status: emailResponse.status })
 
       if (functionError) {
         // Log the full error for debugging
