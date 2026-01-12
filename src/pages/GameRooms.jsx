@@ -12,6 +12,8 @@ function GameRooms() {
   const [newRoomName, setNewRoomName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [newRoomCode, setNewRoomCode] = useState('')
+  const [showCodeModal, setShowCodeModal] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -96,6 +98,9 @@ function GameRooms() {
           .from('room_members')
           .insert([{ room_id: data.id, user_id: user.id }])
 
+        // Show the room code
+        setNewRoomCode(code)
+        setShowCodeModal(true)
         setNewRoomName('')
         loadRooms()
       } else {
@@ -117,6 +122,9 @@ function GameRooms() {
           .from('room_members')
           .insert([{ room_id: data.id, user_id: user.id }])
 
+        // Show the room code
+        setNewRoomCode(codeData)
+        setShowCodeModal(true)
         setNewRoomName('')
         loadRooms()
       }
@@ -350,6 +358,111 @@ function GameRooms() {
           )}
         </div>
       </div>
+
+      {/* Room Code Modal */}
+      {showCodeModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '2rem'
+        }}>
+          <div className="card" style={{
+            maxWidth: '500px',
+            width: '100%',
+            borderRadius: '24px',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowCodeModal(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                color: 'var(--text-dark)'
+              }}
+            >
+              ×
+            </button>
+
+            <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '1rem' }}>
+              Room Created! 🎉
+            </h2>
+
+            <p style={{ fontSize: '1rem', color: 'var(--text-light)', marginBottom: '1.5rem' }}>
+              Share this code with your friends so they can join:
+            </p>
+
+            <div style={{
+              padding: '2rem',
+              backgroundColor: 'var(--pastel-yellow)',
+              borderRadius: '16px',
+              textAlign: 'center',
+              marginBottom: '1.5rem'
+            }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
+                Room Code
+              </p>
+              <div style={{
+                fontSize: '3rem',
+                fontWeight: '700',
+                fontFamily: 'monospace',
+                letterSpacing: '0.5rem',
+                color: 'var(--text-dark)',
+                marginBottom: '1rem'
+              }}>
+                {newRoomCode}
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(newRoomCode)
+                  alert('Room code copied to clipboard!')
+                }}
+                style={{
+                  backgroundColor: 'var(--pastel-pink)',
+                  color: 'white',
+                  borderRadius: '10px',
+                  padding: '0.625rem 1.25rem',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  border: 'none',
+                  cursor: 'pointer'
+                }}
+              >
+                Copy Code
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowCodeModal(false)}
+              style={{
+                width: '100%',
+                backgroundColor: 'var(--pastel-blue)',
+                color: 'var(--text-dark)',
+                borderRadius: '12px',
+                padding: '0.875rem 1.5rem',
+                fontSize: '1rem',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

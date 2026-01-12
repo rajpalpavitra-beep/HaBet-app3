@@ -154,7 +154,11 @@ function Dashboard() {
 
         {/* Feature Cards */}
         <div className="flex gap-4 mb-6" style={{ flexWrap: 'wrap', justifyContent: 'space-between', gap: '1.5rem' }}>
-          <div className="card" style={{ flex: '1', minWidth: '200px', borderRadius: '20px', padding: '1.75rem' }}>
+          <div 
+            className="card" 
+            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', padding: '1.75rem', cursor: 'pointer' }}
+            onClick={() => navigate('/your-bets')}
+          >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ fontSize: '2rem' }}>📊</div>
               <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Your Bets</h3>

@@ -82,9 +82,22 @@ function BetDetail() {
 
   const calculateProgress = async (betData) => {
     try {
-      const start = new Date(betData.start_date || betData.created_at)
-      const end = new Date(betData.target_date || betData.start_date)
+      if (!betData.start_date || !betData.target_date) {
+        setProgress({ totalDays: 0, completedDays: 0, percentage: 0 })
+        return
+      }
+
+      const start = new Date(betData.start_date)
+      const end = new Date(betData.target_date)
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      
+      // Calculate total days in bet period
       const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1
+      
+      // Calculate days elapsed (up to today or end date, whichever is earlier)
+      const endDate = end < today ? end : today
+      const daysElapsed = Math.max(0, Math.ceil((endDate - start) / (1000 * 60 * 60 * 24)) + 1)
 
       const { data, error } = await supabase
         .from('check_ins')
@@ -96,11 +109,12 @@ function BetDetail() {
       if (error) throw error
 
       const completedDays = (data || []).length
-      const percentage = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0
+      const percentage = daysElapsed > 0 ? Math.round((completedDays / daysElapsed) * 100) : 0
 
       setProgress({ totalDays, completedDays, percentage })
     } catch (err) {
       console.error('Error calculating progress:', err)
+      setProgress({ totalDays: 0, completedDays: 0, percentage: 0 })
     }
   }
 
@@ -261,18 +275,23 @@ function BetDetail() {
         </div>
 
         {/* Check-In Progress Meter */}
-        {bet.status === 'pending' && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="handwritten" style={{ fontSize: '1.5rem', margin: 0 }}>Check-In Progress</h3>
+        <div className="mb-4" style={{ 
+          padding: '1.5rem', 
+          backgroundColor: '#F9F9F9', 
+          borderRadius: '16px',
+          border: '2px solid var(--pastel-blue)'
+        }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="handwritten" style={{ fontSize: '1.5rem', margin: 0 }}>Check-In Progress 📈</h3>
+            {bet.status === 'pending' && (
               <button
                 onClick={() => setShowCheckInPopup(true)}
                 style={{
                   backgroundColor: 'var(--pastel-blue)',
                   color: 'var(--text-dark)',
                   borderRadius: '10px',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.9rem',
+                  padding: '0.625rem 1.25rem',
+                  fontSize: '0.95rem',
                   fontWeight: '600',
                   border: 'none',
                   cursor: 'pointer'
@@ -280,35 +299,45 @@ function BetDetail() {
               >
                 Check In
               </button>
-            </div>
+            )}
+          </div>
             <div style={{
               width: '100%',
-              height: '30px',
+              height: '40px',
               backgroundColor: '#E8E8E8',
-              borderRadius: '15px',
+              borderRadius: '20px',
               overflow: 'hidden',
-              marginTop: '0.75rem'
+              marginTop: '1rem',
+              position: 'relative',
+              border: '2px solid #D0D0D0'
             }}>
               <div style={{
-                width: `${progress.percentage}%`,
+                width: `${Math.max(progress.percentage, 5)}%`,
                 height: '100%',
-                backgroundColor: 'var(--pastel-mint)',
-                transition: 'width 0.3s ease',
+                backgroundColor: progress.percentage >= 100 ? 'var(--pastel-mint)' : 'var(--pastel-blue)',
+                transition: 'width 0.5s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--text-dark)',
-                fontWeight: '600',
-                fontSize: '0.85rem'
+                fontWeight: '700',
+                fontSize: '1rem',
+                minWidth: '50px'
               }}>
-                {progress.percentage > 10 && `${progress.percentage}%`}
+                {progress.percentage}%
               </div>
             </div>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginTop: '0.5rem' }}>
-              {progress.completedDays} of {progress.totalDays} days completed
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p style={{ fontSize: '0.95rem', color: 'var(--text-dark)', margin: 0, fontWeight: '600' }}>
+                {progress.completedDays} of {progress.totalDays} days completed
+              </p>
+              {bet.status === 'pending' && (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+                  {progress.totalDays - progress.completedDays} days remaining
+                </p>
+              )}
+            </div>
           </div>
-        )}
 
         {/* Accountable Friends */}
         {accountableFriends.length > 0 && (

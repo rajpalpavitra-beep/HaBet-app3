@@ -8,6 +8,7 @@ import CreateBet from './pages/CreateBet'
 import Friends from './pages/Friends'
 import GameRooms from './pages/GameRooms'
 import ProfileSettings from './pages/ProfileSettings'
+import YourBets from './pages/YourBets'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -85,6 +86,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ProfileSettings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/your-bets"
+          element={
+            <ProtectedRoute>
+              <YourBets />
             </ProtectedRoute>
           }
         />
