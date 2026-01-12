@@ -223,7 +223,7 @@ function Friends() {
         {/* Add Friend Section */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
           <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Add Friend</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <input
               type="email"
               placeholder="Enter email address"
@@ -233,7 +233,7 @@ function Friends() {
                 flex: 1,
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1.25rem',
                 fontSize: '1rem'
               }}
             />
@@ -243,11 +243,12 @@ function Friends() {
                 backgroundColor: 'var(--pastel-pink)',
                 color: 'white',
                 borderRadius: '12px',
-                padding: '0.75rem 1.5rem',
+                padding: '0.875rem 1.75rem',
                 fontSize: '1rem',
                 fontWeight: '600',
                 border: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Send Request
@@ -259,13 +260,13 @@ function Friends() {
         {receivedRequests.length > 0 && (
           <div className="card mb-6" style={{ borderRadius: '24px' }}>
             <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Friend Requests</h2>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
               {receivedRequests.map((request) => (
                 <div
                   key={request.id}
                   className="flex items-center justify-between"
                   style={{
-                    padding: '1rem',
+                    padding: '1.25rem',
                     backgroundColor: '#F9F9F9',
                     borderRadius: '12px'
                   }}
@@ -278,15 +279,15 @@ function Friends() {
                       {request.requester?.email}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-3">
                     <button
                       onClick={() => acceptRequest(request.id)}
                       style={{
                         backgroundColor: 'var(--pastel-mint)',
                         color: 'var(--text-dark)',
-                        borderRadius: '8px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.9rem',
+                        borderRadius: '10px',
+                        padding: '0.625rem 1.25rem',
+                        fontSize: '0.95rem',
                         fontWeight: '600',
                         border: 'none',
                         cursor: 'pointer'
@@ -299,9 +300,9 @@ function Friends() {
                       style={{
                         backgroundColor: 'var(--pastel-pink)',
                         color: 'white',
-                        borderRadius: '8px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.9rem',
+                        borderRadius: '10px',
+                        padding: '0.625rem 1.25rem',
+                        fontSize: '0.95rem',
                         fontWeight: '600',
                         border: 'none',
                         cursor: 'pointer'
@@ -320,12 +321,12 @@ function Friends() {
         {pendingRequests.length > 0 && (
           <div className="card mb-6" style={{ borderRadius: '24px' }}>
             <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Pending Requests</h2>
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
               {pendingRequests.map((request) => (
                 <div
                   key={request.id}
                   style={{
-                    padding: '1rem',
+                    padding: '1.25rem',
                     backgroundColor: '#F9F9F9',
                     borderRadius: '12px'
                   }}
@@ -350,12 +351,12 @@ function Friends() {
               No friends yet. Send a friend request to get started!
             </p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
               {friends.map((friend) => (
                 <div
                   key={friend.id}
                   style={{
-                    padding: '1rem',
+                    padding: '1.25rem',
                     backgroundColor: '#F9F9F9',
                     borderRadius: '12px'
                   }}

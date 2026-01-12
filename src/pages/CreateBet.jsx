@@ -99,9 +99,9 @@ function CreateBet() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="handwritten" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+          <form onSubmit={handleSubmit} className="flex flex-col" style={{ gap: '1.75rem' }}>
+            <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+              <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
                 Bet Title *
               </label>
               <input
@@ -112,17 +112,18 @@ function CreateBet() {
                 style={{
                   borderRadius: '12px',
                   border: '2px solid #E8E8E8',
-                  padding: '0.75rem 1rem',
+                  padding: '0.875rem 1.25rem',
                   fontSize: '1rem',
                   fontFamily: 'var(--font-handwritten)',
-                  backgroundColor: 'white'
+                  backgroundColor: 'white',
+                  width: '100%'
                 }}
                 placeholder="I week treat in cafe"
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="handwritten" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+              <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
                 Description
               </label>
               <textarea
@@ -132,19 +133,20 @@ function CreateBet() {
                 style={{
                   borderRadius: '12px',
                   border: '2px solid #E8E8E8',
-                  padding: '0.75rem 1rem',
+                  padding: '0.875rem 1.25rem',
                   fontSize: '1rem',
                   fontFamily: 'var(--font-handwritten)',
                   backgroundColor: 'white',
-                  resize: 'vertical'
+                  resize: 'vertical',
+                  width: '100%'
                 }}
                 placeholder="More details about the bet..."
               />
             </div>
 
-            <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
-              <div className="flex flex-col gap-1" style={{ flex: '1', minWidth: '200px' }}>
-                <label className="handwritten" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            <div className="flex gap-4" style={{ flexWrap: 'wrap', gap: '1.5rem' }}>
+              <div className="flex flex-col" style={{ flex: '1', minWidth: '200px', gap: '0.75rem' }}>
+                <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
                   Start Date *
                 </label>
                 <input
@@ -155,15 +157,16 @@ function CreateBet() {
                   style={{
                     borderRadius: '12px',
                     border: '2px solid #E8E8E8',
-                    padding: '0.75rem 1rem',
+                    padding: '0.875rem 1.25rem',
                     fontSize: '1rem',
-                    backgroundColor: 'white'
+                    backgroundColor: 'white',
+                    width: '100%'
                   }}
                 />
               </div>
 
-              <div className="flex flex-col gap-1" style={{ flex: '1', minWidth: '200px' }}>
-                <label className="handwritten" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+              <div className="flex flex-col" style={{ flex: '1', minWidth: '200px', gap: '0.75rem' }}>
+                <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
                   End Date *
                 </label>
                 <input
@@ -174,16 +177,17 @@ function CreateBet() {
                   style={{
                     borderRadius: '12px',
                     border: '2px solid #E8E8E8',
-                    padding: '0.75rem 1rem',
+                    padding: '0.875rem 1.25rem',
                     fontSize: '1rem',
-                    backgroundColor: 'white'
+                    backgroundColor: 'white',
+                    width: '100%'
                   }}
                 />
               </div>
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="handwritten" style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+              <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
                 Daily Goal *
               </label>
               <input
@@ -194,33 +198,36 @@ function CreateBet() {
                 style={{
                   borderRadius: '12px',
                   border: '2px solid #E8E8E8',
-                  padding: '0.75rem 1rem',
+                  padding: '0.875rem 1.25rem',
                   fontSize: '1rem',
                   fontFamily: 'var(--font-handwritten)',
-                  backgroundColor: '#F5F5F5'
+                  backgroundColor: '#F5F5F5',
+                  width: '100%'
                 }}
                 placeholder="10k steps"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                backgroundColor: 'var(--pastel-pink)',
-                color: 'white',
-                borderRadius: '12px',
-                padding: '0.875rem 1.5rem',
-                fontSize: '1rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                marginTop: '1rem',
-                opacity: loading ? 0.6 : 1
-              }}
-            >
-              {loading ? 'Creating...' : 'Create Bet'}
-            </button>
+            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  backgroundColor: 'var(--pastel-pink)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  padding: '1rem 2rem',
+                  fontSize: '1.05rem',
+                  fontWeight: '600',
+                  border: 'none',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.6 : 1,
+                  flex: 1
+                }}
+              >
+                {loading ? 'Creating...' : 'Create Bet'}
+              </button>
+            </div>
           </form>
         </div>
       </div>

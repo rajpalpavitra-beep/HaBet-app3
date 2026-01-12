@@ -92,9 +92,9 @@ function Login() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-dark)', fontWeight: '500' }}>
+        <form onSubmit={handleSubmit} className="flex flex-col" style={{ gap: '1.5rem' }}>
+          <div className="flex flex-col" style={{ gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.95rem', color: 'var(--text-dark)', fontWeight: '500', marginBottom: '0.25rem' }}>
               Email
             </label>
             <input
@@ -105,15 +105,16 @@ function Login() {
               style={{ 
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1.25rem',
                 fontSize: '1rem',
-                backgroundColor: email ? '#F5F5F5' : 'white'
+                backgroundColor: email ? '#F5F5F5' : 'white',
+                width: '100%'
               }}
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label style={{ fontSize: '0.9rem', color: 'var(--text-dark)', fontWeight: '500' }}>
+          <div className="flex flex-col" style={{ gap: '0.5rem' }}>
+            <label style={{ fontSize: '0.95rem', color: 'var(--text-dark)', fontWeight: '500', marginBottom: '0.25rem' }}>
               Password
             </label>
             <input
@@ -124,9 +125,10 @@ function Login() {
               style={{ 
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1.25rem',
                 fontSize: '1rem',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                width: '100%'
               }}
             />
           </div>
@@ -137,13 +139,14 @@ function Login() {
               backgroundColor: 'var(--pastel-pink)',
               color: 'white',
               borderRadius: '12px',
-              padding: '0.875rem 1.5rem',
-              fontSize: '1rem',
+              padding: '1rem 1.75rem',
+              fontSize: '1.05rem',
               fontWeight: '600',
               border: 'none',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              marginTop: '0.5rem'
+              marginTop: '0.5rem',
+              width: '100%'
             }}
             onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
             onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}

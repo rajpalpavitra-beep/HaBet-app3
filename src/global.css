@@ -1,6 +1,6 @@
 /* Global styles for HaBet */
 
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Permanent+Marker&family=Fredoka:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Schoolbell&family=Fredoka:wght@400;500;600&display=swap');
 
 :root {
   /* Pastel Colors */
@@ -17,8 +17,8 @@
   --error-light: #FFE5E5;
   
   /* Font */
-  --font-display: 'Caveat', cursive;
-  --font-handwritten: 'Permanent Marker', cursive;
+  --font-display: 'Schoolbell', cursive;
+  --font-handwritten: 'Schoolbell', cursive;
   --font-body: 'Fredoka', sans-serif;
   
   /* Gradients */
@@ -53,7 +53,8 @@ h1 {
   font-size: 2.5rem;
   font-weight: 400;
   color: var(--text-dark);
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.2;
 }
 
 h2 {
@@ -61,7 +62,8 @@ h2 {
   font-size: 2rem;
   font-weight: 400;
   color: var(--text-dark);
-  margin-bottom: 0.8rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
 }
 
 h3 {
@@ -69,7 +71,8 @@ h3 {
   font-size: 1.5rem;
   font-weight: 400;
   color: var(--text-dark);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
 p {
@@ -82,11 +85,12 @@ button {
   font-family: var(--font-body);
   border: none;
   border-radius: 20px;
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  margin: 0.25rem;
 }
 
 .btn-primary {
@@ -124,10 +128,11 @@ input, textarea, select {
   font-family: var(--font-body);
   border: 2px solid #E8E8E8;
   border-radius: 12px;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem;
   font-size: 1rem;
   transition: all 0.3s ease;
   background-color: white;
+  width: 100%;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -136,13 +141,18 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(255, 179, 186, 0.2);
 }
 
+input::placeholder, textarea::placeholder {
+  color: #B0B0B0;
+}
+
 /* Cards */
 .card {
   background-color: white;
   border-radius: 24px;
-  padding: 1.5rem;
+  padding: 2rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
 }
 
 .card:hover {
@@ -168,6 +178,14 @@ input:focus, textarea:focus, select:focus {
   padding: 2rem;
 }
 
+.container > * {
+  margin-bottom: 1.5rem;
+}
+
+.container > *:last-child {
+  margin-bottom: 0;
+}
+
 .text-center {
   text-align: center;
 }
@@ -185,6 +203,7 @@ input:focus, textarea:focus, select:focus {
 .gap-1 { gap: 0.5rem; }
 .gap-2 { gap: 1rem; }
 .gap-3 { gap: 1.5rem; }
+.gap-4 { gap: 2rem; }
 
 .flex {
   display: flex;

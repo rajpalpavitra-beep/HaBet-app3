@@ -133,55 +133,55 @@ function Dashboard() {
         </div>
 
         {/* Feature Cards */}
-        <div className="flex gap-4 mb-6" style={{ flexWrap: 'wrap', justifyContent: 'space-between' }}>
-          <div className="card" style={{ flex: '1', minWidth: '200px', borderRadius: '20px' }}>
-            <div className="flex items-center gap-2 mb-2">
-              <div style={{ fontSize: '1.5rem' }}>📊</div>
-              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.3rem' }}>Your Bets</h3>
+        <div className="flex gap-4 mb-6" style={{ flexWrap: 'wrap', justifyContent: 'space-between', gap: '1.5rem' }}>
+          <div className="card" style={{ flex: '1', minWidth: '200px', borderRadius: '20px', padding: '1.75rem' }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div style={{ fontSize: '2rem' }}>📊</div>
+              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Your Bets</h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
               {bets.length} {bets.length === 1 ? 'bet' : 'bets'}
             </p>
           </div>
 
           <div 
             className="card" 
-            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer' }}
+            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer', padding: '1.75rem' }}
             onClick={() => navigate('/leaderboard')}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <div style={{ fontSize: '1.5rem' }}>🏆</div>
-              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.3rem' }}>Leaderboard</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <div style={{ fontSize: '2rem' }}>🏆</div>
+              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Leaderboard</h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
               View rankings
             </p>
           </div>
 
           <div 
             className="card" 
-            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer' }}
+            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer', padding: '1.75rem' }}
             onClick={() => navigate('/friends')}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <div style={{ fontSize: '1.5rem' }}>👥</div>
-              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.3rem' }}>Friends</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <div style={{ fontSize: '2rem' }}>👥</div>
+              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Friends</h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
               Connect & compete
             </p>
           </div>
 
           <div 
             className="card" 
-            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer' }}
+            style={{ flex: '1', minWidth: '200px', borderRadius: '20px', cursor: 'pointer', padding: '1.75rem' }}
             onClick={() => navigate('/rooms')}
           >
-            <div className="flex items-center gap-2 mb-2">
-              <div style={{ fontSize: '1.5rem' }}>🎮</div>
-              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.3rem' }}>Game Rooms</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <div style={{ fontSize: '2rem' }}>🎮</div>
+              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Game Rooms</h3>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
               Join with code
             </p>
           </div>
@@ -190,26 +190,27 @@ function Dashboard() {
         {/* Create New Bet Card */}
         <div 
           className="card" 
-          style={{ borderRadius: '20px', cursor: 'pointer' }}
+          style={{ borderRadius: '20px', cursor: 'pointer', padding: '1.75rem' }}
           onClick={() => navigate('/create-bet')}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div style={{ 
-              width: '40px', 
-              height: '40px', 
+              width: '50px', 
+              height: '50px', 
               borderRadius: '50%', 
               backgroundColor: '#F5F5F5',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.5rem',
-              fontWeight: 'bold'
+              fontSize: '2rem',
+              fontWeight: 'bold',
+              flexShrink: 0
             }}>
               +
             </div>
             <div>
-              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.3rem' }}>Create New Bet</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: '0.25rem 0 0 0' }}>
+              <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem', marginBottom: '0.5rem' }}>Create New Bet</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0 }}>
                 Start a new habit challenge
               </p>
             </div>

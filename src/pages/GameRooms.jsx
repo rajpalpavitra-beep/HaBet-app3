@@ -232,7 +232,7 @@ function GameRooms() {
         {/* Create Room */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
           <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Create Room</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <input
               type="text"
               placeholder="Room name"
@@ -242,7 +242,7 @@ function GameRooms() {
                 flex: 1,
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1.25rem',
                 fontSize: '1rem'
               }}
             />
@@ -252,11 +252,12 @@ function GameRooms() {
                 backgroundColor: 'var(--pastel-pink)',
                 color: 'white',
                 borderRadius: '12px',
-                padding: '0.75rem 1.5rem',
+                padding: '0.875rem 1.75rem',
                 fontSize: '1rem',
                 fontWeight: '600',
                 border: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Create
@@ -267,7 +268,7 @@ function GameRooms() {
         {/* Join Room */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
           <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Join Room</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <input
               type="text"
               placeholder="Enter room code"
@@ -277,7 +278,7 @@ function GameRooms() {
                 flex: 1,
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
-                padding: '0.75rem 1rem',
+                padding: '0.875rem 1.25rem',
                 fontSize: '1rem',
                 textTransform: 'uppercase'
               }}
@@ -288,11 +289,12 @@ function GameRooms() {
                 backgroundColor: 'var(--pastel-blue)',
                 color: 'var(--text-dark)',
                 borderRadius: '12px',
-                padding: '0.75rem 1.5rem',
+                padding: '0.875rem 1.75rem',
                 fontSize: '1rem',
                 fontWeight: '600',
                 border: 'none',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               Join
@@ -308,13 +310,13 @@ function GameRooms() {
               You're not in any rooms yet. Create or join a room to get started!
             </p>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
               {myRooms.map((room) => (
                 <div
                   key={room.id}
                   className="flex items-center justify-between"
                   style={{
-                    padding: '1rem',
+                    padding: '1.25rem',
                     backgroundColor: '#F9F9F9',
                     borderRadius: '12px'
                   }}
@@ -332,9 +334,9 @@ function GameRooms() {
                     style={{
                       backgroundColor: 'var(--pastel-pink)',
                       color: 'white',
-                      borderRadius: '8px',
-                      padding: '0.5rem 1rem',
-                      fontSize: '0.9rem',
+                      borderRadius: '10px',
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '0.95rem',
                       fontWeight: '600',
                       border: 'none',
                       cursor: 'pointer'
