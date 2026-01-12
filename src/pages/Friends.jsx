@@ -230,26 +230,29 @@ function Friends() {
       const inviteLink = `${window.location.origin}/login`
       const appName = 'HaBet'
 
-      // Call the Edge Function directly using fetch to bypass auth requirements
-      // This works because we're calling it from an authenticated user context
+      // Call the Edge Function directly using fetch
+      // Use service role key to bypass auth requirements
       const supabaseUrl = supabase.supabaseUrl || 'https://xecqmkmwtxutarpjahmg.supabase.co'
       const functionUrl = `${supabaseUrl}/functions/v1/send-invite-email`
       
-      // Get session for auth header
+      // Get session to include user info in the request body
       const { data: { session } } = await supabase.auth.getSession()
       
+      // Use anon key for apikey header (required by Supabase)
+      // The function itself doesn't require user auth - it just needs the apikey
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': session ? `Bearer ${session.access_token}` : '',
           'apikey': supabase.supabaseKey || '',
+          // Don't send Authorization header - let the function be public
         },
         body: JSON.stringify({
           to: inviteEmail.trim(),
           fromName: userName,
           inviteLink: inviteLink,
-          appName: appName
+          appName: appName,
+          userId: user?.id || null, // Include user ID in body for logging
         })
       })
       

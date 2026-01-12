@@ -26,7 +26,11 @@ serve(async (req) => {
   }
 
   try {
-    const { to, fromName, inviteLink, appName } = await req.json()
+    // Get request body
+    const { to, fromName, inviteLink, appName, userId } = await req.json()
+    
+    // Log the request for debugging
+    console.log('Email invite request:', { to, fromName, userId, hasAuth: !!req.headers.get('Authorization') })
 
     if (!to || !inviteLink) {
       return new Response(
