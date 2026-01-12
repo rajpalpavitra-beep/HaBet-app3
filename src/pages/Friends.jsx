@@ -10,6 +10,8 @@ function Friends() {
   const [pendingRequests, setPendingRequests] = useState([])
   const [receivedRequests, setReceivedRequests] = useState([])
   const [searchEmail, setSearchEmail] = useState('')
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -200,6 +202,79 @@ function Friends() {
     return friend.requester?.display_name || friend.requester?.email || 'Unknown'
   }
 
+  const sendInviteEmail = async () => {
+    if (!inviteEmail.trim()) {
+      setError('Please enter an email address')
+      return
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(inviteEmail.trim())) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    try {
+      setInviteLoading(true)
+      setError('')
+      
+      // Get user's profile for display name
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, nickname')
+        .eq('id', user.id)
+        .single()
+
+      const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
+      const inviteLink = `${window.location.origin}/login`
+      const appName = 'HaBet'
+
+      // Call Supabase Edge Function to send email
+      // If Edge Function is not set up, this will fail gracefully
+      const { data, error: functionError } = await supabase.functions.invoke('send-invite-email', {
+        body: {
+          to: inviteEmail.trim(),
+          fromName: userName,
+          inviteLink: inviteLink,
+          appName: appName
+        }
+      })
+
+      if (functionError) {
+        // Fallback: Use mailto link or show success message
+        // In production, you'd want to set up the Edge Function
+        console.log('Edge Function not available, using fallback')
+        
+        // Create mailto link as fallback
+        const subject = encodeURIComponent(`${userName} invited you to join ${appName}!`)
+        const body = encodeURIComponent(
+          `Hi!\n\n${userName} invited you to join ${appName} - a fun way to bet on your habits and stay accountable!\n\n` +
+          `Sign up here: ${inviteLink}\n\n` +
+          `Join us and start betting on your habits today! 🎯`
+        )
+        const mailtoLink = `mailto:${inviteEmail.trim()}?subject=${subject}&body=${body}`
+        
+        // For now, we'll show a success message and copy the invite link
+        // In production, you'd integrate with Resend, SendGrid, etc.
+        alert(
+          `Invitation email would be sent to ${inviteEmail.trim()}!\n\n` +
+          `To enable email sending, set up a Supabase Edge Function or email service.\n\n` +
+          `For now, you can manually share this link: ${inviteLink}`
+        )
+      } else {
+        alert(`Invitation email sent successfully to ${inviteEmail.trim()}!`)
+      }
+
+      setInviteEmail('')
+    } catch (err) {
+      console.error('Error sending invite email:', err)
+      setError(err.message || 'Failed to send invitation email')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
@@ -238,15 +313,70 @@ function Friends() {
           </div>
         )}
 
+        {/* Invite Friends Section */}
+        <div className="card mb-6" style={{ borderRadius: '24px', backgroundColor: 'var(--pastel-yellow)' }}>
+          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Invite Friends 📧</h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
+            Send an invitation email to friends who aren't on HaBet yet!
+          </p>
+          <div className="flex gap-3">
+            <input
+              type="email"
+              placeholder="Enter friend's email address"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  sendInviteEmail()
+                }
+              }}
+              style={{
+                flex: 1,
+                borderRadius: '12px',
+                border: '2px solid #E8E8E8',
+                padding: '0.875rem 1.25rem',
+                fontSize: '1rem',
+                backgroundColor: 'white'
+              }}
+            />
+            <button
+              onClick={sendInviteEmail}
+              disabled={inviteLoading}
+              style={{
+                backgroundColor: inviteLoading ? '#ccc' : 'var(--pastel-pink)',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '0.875rem 1.75rem',
+                fontSize: '1rem',
+                fontWeight: '600',
+                border: 'none',
+                cursor: inviteLoading ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap',
+                opacity: inviteLoading ? 0.6 : 1
+              }}
+            >
+              {inviteLoading ? 'Sending...' : 'Send Invite'}
+            </button>
+          </div>
+        </div>
+
         {/* Add Friend Section */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
           <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Add Friend</h2>
+          <p style={{ fontSize: '0.95rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
+            Add friends who are already on HaBet
+          </p>
           <div className="flex gap-3">
             <input
               type="email"
               placeholder="Enter email address"
               value={searchEmail}
               onChange={(e) => setSearchEmail(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  sendFriendRequest()
+                }
+              }}
               style={{
                 flex: 1,
                 borderRadius: '12px',
