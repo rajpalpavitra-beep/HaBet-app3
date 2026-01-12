@@ -230,16 +230,25 @@ function Friends() {
       const inviteLink = `${window.location.origin}/login`
       const appName = 'HaBet'
 
-      // Ensure user is logged in
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // Ensure user is logged in and get session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('Session error:', sessionError)
+        setError('Session error. Please refresh and try again.')
+        setInviteLoading(false)
+        return
+      }
+      
+      if (!session || !session.access_token) {
         setError('Please log in to send invitations')
         setInviteLoading(false)
         return
       }
 
+      console.log('Calling Edge Function with session token...')
+      
       // Call Supabase Edge Function to send email
-      // The supabase client automatically includes auth headers when user is logged in
+      // Explicitly pass the authorization header
       const { data, error: functionError } = await supabase.functions.invoke('send-invite-email', {
         body: {
           to: inviteEmail.trim(),
@@ -248,9 +257,12 @@ function Friends() {
           appName: appName
         },
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': supabase.supabaseKey || '',
         }
       })
+      
+      console.log('Function response:', { data, error: functionError })
 
       if (functionError) {
         // Log the full error for debugging
