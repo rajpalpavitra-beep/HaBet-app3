@@ -1,0 +1,229 @@
+/* Global styles for HaBet */
+
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Permanent+Marker&family=Fredoka:wght@400;500;600&display=swap');
+
+:root {
+  /* Pastel Colors */
+  --pastel-pink: #FFB3BA;
+  --pastel-blue: #BAE1FF;
+  --pastel-yellow: #FFFACD;
+  --pastel-lavender: #E6D7F0;
+  --pastel-purple: #D4A5F5;
+  --pastel-mint: #B3E5D0;
+  --cream: #FFF8F0;
+  --text-dark: #4A4A4A;
+  --text-light: #7A7A7A;
+  --error-red: #FF6B6B;
+  --error-light: #FFE5E5;
+  
+  /* Font */
+  --font-display: 'Caveat', cursive;
+  --font-handwritten: 'Permanent Marker', cursive;
+  --font-body: 'Fredoka', sans-serif;
+  
+  /* Gradients */
+  --gradient-login: linear-gradient(to right, #FFE5F1, #E0E7FF);
+  --gradient-dashboard: linear-gradient(to bottom, #FFE5F1, #E6D7F0);
+  --gradient-create: linear-gradient(to bottom, #E6D7F0, #D4A5F5);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--gradient-dashboard);
+  background-attachment: fixed;
+  color: var(--text-dark);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Typography */
+h1 {
+  font-family: var(--font-handwritten);
+  font-size: 2.5rem;
+  font-weight: 400;
+  color: var(--text-dark);
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-family: var(--font-handwritten);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-dark);
+  margin-bottom: 0.8rem;
+}
+
+h3 {
+  font-family: var(--font-handwritten);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+p {
+  color: var(--text-light);
+  margin-bottom: 1rem;
+}
+
+/* Buttons */
+button {
+  font-family: var(--font-body);
+  border: none;
+  border-radius: 20px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: var(--pastel-pink);
+  color: var(--text-dark);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(255, 179, 186, 0.3);
+}
+
+.btn-secondary {
+  background-color: var(--pastel-blue);
+  color: var(--text-dark);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(186, 225, 255, 0.3);
+}
+
+.btn-success {
+  background-color: var(--pastel-mint);
+  color: var(--text-dark);
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(179, 229, 208, 0.3);
+}
+
+/* Input fields */
+input, textarea, select {
+  font-family: var(--font-body);
+  border: 2px solid #E8E8E8;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--pastel-pink);
+  box-shadow: 0 0 0 3px rgba(255, 179, 186, 0.2);
+}
+
+/* Cards */
+.card {
+  background-color: white;
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Error Messages */
+.error-box {
+  background-color: var(--error-light);
+  border-left: 4px solid var(--error-red);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  color: var(--error-red);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Utilities */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+.gap-1 { gap: 0.5rem; }
+.gap-2 { gap: 1rem; }
+.gap-3 { gap: 1.5rem; }
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.hidden {
+  display: none;
+}
+
+/* Handwritten text class */
+.handwritten {
+  font-family: var(--font-handwritten);
+  font-weight: 400;
+}
+
+/* Gradient backgrounds */
+.bg-gradient-login {
+  background: var(--gradient-login);
+  min-height: 100vh;
+}
+
+.bg-gradient-create {
+  background: var(--gradient-create);
+  min-height: 100vh;
+}
+
