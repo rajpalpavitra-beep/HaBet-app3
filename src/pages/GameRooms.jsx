@@ -310,16 +310,81 @@ function GameRooms() {
           </div>
         </div>
 
+        {/* Rooms I Created */}
+        {rooms.length > 0 && (
+          <div className="card mb-6" style={{ borderRadius: '24px' }}>
+            <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Rooms I Created</h2>
+            <div className="flex flex-col" style={{ gap: '1rem' }}>
+              {rooms.map((room) => (
+                <div
+                  key={room.id}
+                  style={{
+                    padding: '1.5rem',
+                    backgroundColor: 'var(--pastel-yellow)',
+                    borderRadius: '16px',
+                    border: '2px solid var(--pastel-pink)'
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 style={{ fontWeight: '600', fontSize: '1.2rem', margin: 0 }}>
+                      {room.name || 'Unnamed Room'}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(room.room_code)
+                        alert('Room code copied to clipboard!')
+                      }}
+                      style={{
+                        backgroundColor: 'var(--pastel-pink)',
+                        color: 'white',
+                        borderRadius: '8px',
+                        padding: '0.5rem 1rem',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Copy Code
+                    </button>
+                  </div>
+                  <div style={{
+                    padding: '1rem',
+                    backgroundColor: 'white',
+                    borderRadius: '12px',
+                    textAlign: 'center',
+                    marginTop: '0.75rem'
+                  }}>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem', margin: 0 }}>
+                      Share this code with friends:
+                    </p>
+                    <div style={{
+                      fontSize: '2rem',
+                      fontWeight: '700',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.3rem',
+                      color: 'var(--text-dark)',
+                      margin: 0
+                    }}>
+                      {room.room_code}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* My Rooms */}
         <div className="card" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>My Rooms</h2>
-          {myRooms.length === 0 ? (
+          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Rooms I Joined</h2>
+          {myRooms.filter(room => !rooms.find(r => r.id === room.id)).length === 0 ? (
             <p style={{ color: 'var(--text-light)', textAlign: 'center', padding: '2rem' }}>
-              You're not in any rooms yet. Create or join a room to get started!
+              You haven't joined any rooms yet. Create or join a room to get started!
             </p>
           ) : (
             <div className="flex flex-col" style={{ gap: '1rem' }}>
-              {myRooms.map((room) => (
+              {myRooms.filter(room => !rooms.find(r => r.id === room.id)).map((room) => (
                 <div
                   key={room.id}
                   className="flex items-center justify-between"

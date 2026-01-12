@@ -77,13 +77,19 @@ CREATE POLICY "Users can create rooms"
   WITH CHECK (auth.uid() = creator_id);
 
 -- RLS Policies for room_members
+-- Fix: Avoid recursion by not querying room_members within the policy
+-- Instead, allow users to see their own memberships and creators to see all members
 CREATE POLICY "Users can view room members"
   ON room_members FOR SELECT
   USING (
+    -- Users can see their own membership
+    user_id = auth.uid()
+    OR
+    -- Users can see all members if they are the creator of the room
     EXISTS (
-      SELECT 1 FROM room_members rm
-      WHERE rm.room_id = room_members.room_id
-      AND rm.user_id = auth.uid()
+      SELECT 1 FROM game_rooms gr
+      WHERE gr.id = room_members.room_id
+      AND gr.creator_id = auth.uid()
     )
   );
 
