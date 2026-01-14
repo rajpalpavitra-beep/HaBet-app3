@@ -10,13 +10,50 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState(null)
   const [overallProgress, setOverallProgress] = useState({ completed: 0, total: 0, percentage: 0 })
+  const [unreadNotifications, setUnreadNotifications] = useState(0)
 
   useEffect(() => {
     if (user) {
       loadProfile()
       loadBets()
+      loadNotifications()
+      
+      // Set up real-time subscription for notifications
+      const subscription = supabase
+        .channel('notifications')
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}`
+          }, 
+          () => {
+            loadNotifications()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        subscription.unsubscribe()
+      }
     }
   }, [user])
+
+  const loadNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id, read')
+        .eq('user_id', user.id)
+        .eq('read', false)
+
+      if (error) throw error
+      setUnreadNotifications((data || []).length)
+    } catch (err) {
+      console.error('Error loading notifications:', err)
+    }
+  }
 
   const loadProfile = async () => {
     try {
@@ -140,21 +177,62 @@ function Dashboard() {
             </div>
             <h1 className="handwritten" style={{ margin: 0 }}>HaBet Dashboard</h1>
           </div>
-          <button 
-            onClick={signOut}
-            style={{
-              backgroundColor: 'var(--pastel-pink)',
-              color: '#FF6B6B',
-              borderRadius: '12px',
-              padding: '0.5rem 1rem',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            Sign Out
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/notifications')}
+              style={{
+                position: 'relative',
+                backgroundColor: 'var(--pastel-purple)',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <span style={{ fontSize: '1.2rem' }}>🔔</span>
+              {unreadNotifications > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  backgroundColor: 'var(--error-red)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  border: '2px solid white'
+                }}>
+                  {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={signOut}
+              style={{
+                backgroundColor: 'var(--pastel-pink)',
+                color: '#FF6B6B',
+                borderRadius: '12px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {/* Welcome Card */}

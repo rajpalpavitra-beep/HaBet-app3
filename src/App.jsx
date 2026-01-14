@@ -9,6 +9,7 @@ import Friends from './pages/Friends'
 import GameRooms from './pages/GameRooms'
 import ProfileSettings from './pages/ProfileSettings'
 import YourBets from './pages/YourBets'
+import Notifications from './pages/Notifications'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -94,6 +95,14 @@ function App() {
           element={
             <ProtectedRoute>
               <YourBets />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
             </ProtectedRoute>
           }
         />
