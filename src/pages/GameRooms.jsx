@@ -7,13 +7,12 @@ function GameRooms() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [rooms, setRooms] = useState([])
-  const [myRooms, setMyRooms] = useState([])
-  const [roomCode, setRoomCode] = useState('')
   const [newRoomName, setNewRoomName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [newRoomCode, setNewRoomCode] = useState('')
-  const [showCodeModal, setShowCodeModal] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [invitingRoomId, setInvitingRoomId] = useState(null)
+  const [inviteLoading, setInviteLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -40,21 +39,13 @@ function GameRooms() {
           .from('game_rooms')
           .select('*')
           .in('id', roomIds)
+          .order('created_at', { ascending: false })
 
         if (roomsError) throw roomsError
-        setMyRooms(roomsData || [])
+        setRooms(roomsData || [])
       } else {
-        setMyRooms([])
+        setRooms([])
       }
-
-      // Get rooms I created
-      const { data: createdRooms, error: createdError } = await supabase
-        .from('game_rooms')
-        .select('*')
-        .eq('creator_id', user.id)
-
-      if (createdError) throw createdError
-      setRooms(createdRooms || [])
     } catch (err) {
       console.error('Error loading rooms:', err)
       setError(err.message)
@@ -72,118 +63,116 @@ function GameRooms() {
     try {
       setError('')
       
-      // Generate room code using Supabase function
-      const { data: codeData, error: codeError } = await supabase
-        .rpc('generate_room_code')
+      const { data, error: insertError } = await supabase
+        .from('game_rooms')
+        .insert([
+          {
+            creator_id: user.id,
+            name: newRoomName.trim()
+          }
+        ])
+        .select()
+        .single()
 
-      if (codeError) {
-        // Fallback if function doesn't exist
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase()
-        const { data, error: insertError } = await supabase
-          .from('game_rooms')
-          .insert([
-            {
-              creator_id: user.id,
-              name: newRoomName.trim(),
-              room_code: code
-            }
-          ])
-          .select()
-          .single()
+      if (insertError) throw insertError
 
-        if (insertError) throw insertError
+      // Add creator as member
+      await supabase
+        .from('room_members')
+        .insert([{ room_id: data.id, user_id: user.id }])
 
-        // Add creator as member
-        await supabase
-          .from('room_members')
-          .insert([{ room_id: data.id, user_id: user.id }])
-
-        // Show the room code
-        setNewRoomCode(code)
-        setShowCodeModal(true)
-        setNewRoomName('')
-        loadRooms()
-      } else {
-        const { data, error: insertError } = await supabase
-          .from('game_rooms')
-          .insert([
-            {
-              creator_id: user.id,
-              name: newRoomName.trim(),
-              room_code: codeData
-            }
-          ])
-          .select()
-          .single()
-
-        if (insertError) throw insertError
-
-        await supabase
-          .from('room_members')
-          .insert([{ room_id: data.id, user_id: user.id }])
-
-        // Show the room code
-        setNewRoomCode(codeData)
-        setShowCodeModal(true)
-        setNewRoomName('')
-        loadRooms()
-      }
+      setNewRoomName('')
+      loadRooms()
+      navigate(`/room/${data.id}`)
     } catch (err) {
       console.error('Error creating room:', err)
       setError(err.message || 'Failed to create room')
     }
   }
 
-  const joinRoom = async () => {
-    if (!roomCode.trim()) {
-      setError('Please enter a room code')
+  const sendRoomInvite = async (roomId) => {
+    if (!inviteEmail.trim()) {
+      setError('Please enter an email address')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(inviteEmail.trim())) {
+      setError('Please enter a valid email address')
       return
     }
 
     try {
+      setInviteLoading(true)
       setError('')
-      
-      // Find room by code
-      const { data: roomData, error: roomError } = await supabase
+
+      // Get room info
+      const { data: roomData } = await supabase
         .from('game_rooms')
-        .select('*')
-        .eq('room_code', roomCode.trim().toUpperCase())
+        .select('name')
+        .eq('id', roomId)
         .single()
 
-      if (roomError || !roomData) {
-        setError('Room not found')
-        return
-      }
-
-      // Check if already a member
-      const { data: existing, error: checkError } = await supabase
-        .from('room_members')
-        .select('*')
-        .eq('room_id', roomData.id)
-        .eq('user_id', user.id)
+      // Get inviter profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, nickname')
+        .eq('id', user.id)
         .single()
 
-      if (existing) {
-        setError('You are already a member of this room')
-        return
+      const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
+      const inviteLink = `${import.meta.env.VITE_APP_URL || 'https://ha-bet-app3.vercel.app'}/room/${roomId}`
+      const roomName = roomData?.name || 'a room'
+
+      // Determine email server URL
+      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1')
+      const emailServerUrl = isProduction
+        ? `${window.location.origin}/api/send-invite-email`
+        : (import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite')
+
+      // Send email invite
+      const emailResponse = await fetch(emailServerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: inviteEmail.trim(),
+          fromName: userName,
+          inviteLink: inviteLink,
+          appName: 'HaBet',
+          roomName: roomName
+        }),
+      })
+
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send invite email')
       }
 
-      // Join room
-      const { error: joinError } = await supabase
-        .from('room_members')
-        .insert([{ room_id: roomData.id, user_id: user.id }])
+      // Create invite record
+      const { error: inviteError } = await supabase
+        .from('room_invites')
+        .insert([{
+          room_id: roomId,
+          inviter_id: user.id,
+          invitee_email: inviteEmail.trim(),
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+        }])
 
-      if (joinError) throw joinError
+      if (inviteError) throw inviteError
 
-      setRoomCode('')
-      loadRooms()
+      alert(`✅ Invitation sent to ${inviteEmail.trim()}!`)
+      setInviteEmail('')
+      setInvitingRoomId(null)
     } catch (err) {
-      console.error('Error joining room:', err)
-      setError(err.message || 'Failed to join room')
+      console.error('Error sending invite:', err)
+      setError(err.message || 'Failed to send invitation')
+    } finally {
+      setInviteLoading(false)
     }
   }
 
   const leaveRoom = async (roomId) => {
+    if (!confirm('Are you sure you want to leave this room?')) return
+
     try {
       const { error } = await supabase
         .from('room_members')
@@ -228,7 +217,7 @@ function GameRooms() {
         </button>
 
         <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
-          Game Rooms
+          Group Rooms
         </h1>
 
         {error && (
@@ -239,19 +228,21 @@ function GameRooms() {
 
         {/* Create Room */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Create Room</h2>
+          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Create New Room</h2>
           <div className="flex gap-3">
             <input
               type="text"
               placeholder="Room name"
               value={newRoomName}
               onChange={(e) => setNewRoomName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && createRoom()}
               style={{
                 flex: 1,
                 borderRadius: '12px',
                 border: '2px solid #E8E8E8',
                 padding: '0.875rem 1.25rem',
-                fontSize: '1rem'
+                fontSize: '1rem',
+                fontFamily: 'var(--font-handwritten)'
               }}
             />
             <button
@@ -273,261 +264,141 @@ function GameRooms() {
           </div>
         </div>
 
-        {/* Join Room */}
-        <div className="card mb-6" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Join Room</h2>
-          <div className="flex gap-3">
-            <input
-              type="text"
-              placeholder="Enter room code"
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-              style={{
-                flex: 1,
-                borderRadius: '12px',
-                border: '2px solid #E8E8E8',
-                padding: '0.875rem 1.25rem',
-                fontSize: '1rem',
-                textTransform: 'uppercase'
-              }}
-            />
-            <button
-              onClick={joinRoom}
-              style={{
-                backgroundColor: 'var(--pastel-blue)',
-                color: 'var(--text-dark)',
-                borderRadius: '12px',
-                padding: '0.875rem 1.75rem',
-                fontSize: '1rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Join
-            </button>
+        {/* My Rooms */}
+        {rooms.length === 0 ? (
+          <div className="card" style={{ borderRadius: '24px', textAlign: 'center', padding: '3rem' }}>
+            <p style={{ fontSize: '1.1rem', color: 'var(--text-light)', marginBottom: '1.5rem' }}>
+              You haven't joined any rooms yet. Create a room to get started!
+            </p>
           </div>
-        </div>
-
-        {/* Rooms I Created */}
-        {rooms.length > 0 && (
-          <div className="card mb-6" style={{ borderRadius: '24px' }}>
-            <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Rooms I Created</h2>
-            <div className="flex flex-col" style={{ gap: '1rem' }}>
-              {rooms.map((room) => (
-                <div
-                  key={room.id}
-                  style={{
-                    padding: '1.5rem',
-                    backgroundColor: 'var(--pastel-yellow)',
-                    borderRadius: '16px',
-                    border: '2px solid var(--pastel-pink)'
-                  }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 style={{ fontWeight: '600', fontSize: '1.2rem', margin: 0 }}>
+        ) : (
+          <div className="flex flex-col" style={{ gap: '1.5rem' }}>
+            {rooms.map((room) => (
+              <div
+                key={room.id}
+                className="card"
+                style={{ borderRadius: '24px', padding: '1.5rem' }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="handwritten" style={{ fontSize: '1.8rem', margin: 0, marginBottom: '0.5rem' }}>
                       {room.name || 'Unnamed Room'}
                     </h3>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0 }}>
+                      Group bet room
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(room.room_code)
-                        alert('Room code copied to clipboard!')
-                      }}
+                      onClick={() => navigate(`/room/${room.id}`)}
                       style={{
-                        backgroundColor: 'var(--pastel-pink)',
-                        color: 'white',
-                        borderRadius: '8px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.85rem',
+                        backgroundColor: 'var(--pastel-blue)',
+                        color: 'var(--text-dark)',
+                        borderRadius: '10px',
+                        padding: '0.625rem 1.25rem',
+                        fontSize: '0.95rem',
                         fontWeight: '600',
                         border: 'none',
                         cursor: 'pointer'
                       }}
                     >
-                      Copy Code
+                      Open
+                    </button>
+                    <button
+                      onClick={() => leaveRoom(room.id)}
+                      style={{
+                        backgroundColor: 'var(--pastel-pink)',
+                        color: 'white',
+                        borderRadius: '10px',
+                        padding: '0.625rem 1.25rem',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Leave
                     </button>
                   </div>
-                  <div style={{
-                    padding: '1rem',
-                    backgroundColor: 'white',
-                    borderRadius: '12px',
-                    textAlign: 'center',
-                    marginTop: '0.75rem'
-                  }}>
-                    <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem', margin: 0 }}>
-                      Share this code with friends:
-                    </p>
-                    <div style={{
-                      fontSize: '2rem',
-                      fontWeight: '700',
-                      fontFamily: 'monospace',
-                      letterSpacing: '0.3rem',
-                      color: 'var(--text-dark)',
-                      margin: 0
-                    }}>
-                      {room.room_code}
-                    </div>
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* My Rooms */}
-        <div className="card" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Rooms I Joined</h2>
-          {myRooms.filter(room => !rooms.find(r => r.id === room.id)).length === 0 ? (
-            <p style={{ color: 'var(--text-light)', textAlign: 'center', padding: '2rem' }}>
-              You haven't joined any rooms yet. Create or join a room to get started!
-            </p>
-          ) : (
-            <div className="flex flex-col" style={{ gap: '1rem' }}>
-              {myRooms.filter(room => !rooms.find(r => r.id === room.id)).map((room) => (
-                <div
-                  key={room.id}
-                  className="flex items-center justify-between"
-                  style={{
-                    padding: '1.25rem',
-                    backgroundColor: '#F9F9F9',
-                    borderRadius: '12px'
-                  }}
-                >
-                  <div>
-                    <p style={{ fontWeight: '600', marginBottom: '0.25rem' }}>
-                      {room.name || 'Unnamed Room'}
-                    </p>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-light)' }}>
-                      Code: <strong>{room.room_code}</strong>
-                    </p>
+                {/* Invite Section */}
+                {invitingRoomId === room.id ? (
+                  <div className="flex gap-2" style={{ marginTop: '1rem' }}>
+                    <input
+                      type="email"
+                      placeholder="Enter email to invite"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && sendRoomInvite(room.id)}
+                      style={{
+                        flex: 1,
+                        borderRadius: '12px',
+                        border: '2px solid #E8E8E8',
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.95rem'
+                      }}
+                    />
+                    <button
+                      onClick={() => sendRoomInvite(room.id)}
+                      disabled={inviteLoading}
+                      style={{
+                        backgroundColor: 'var(--pastel-mint)',
+                        color: 'var(--text-dark)',
+                        borderRadius: '12px',
+                        padding: '0.75rem 1.5rem',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        border: 'none',
+                        cursor: inviteLoading ? 'not-allowed' : 'pointer',
+                        opacity: inviteLoading ? 0.6 : 1
+                      }}
+                    >
+                      {inviteLoading ? 'Sending...' : 'Send Invite'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setInvitingRoomId(null)
+                        setInviteEmail('')
+                      }}
+                      style={{
+                        backgroundColor: '#E8E8E8',
+                        color: 'var(--text-dark)',
+                        borderRadius: '12px',
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
                   </div>
+                ) : (
                   <button
-                    onClick={() => leaveRoom(room.id)}
+                    onClick={() => setInvitingRoomId(room.id)}
                     style={{
-                      backgroundColor: 'var(--pastel-pink)',
+                      width: '100%',
+                      backgroundColor: 'var(--pastel-purple)',
                       color: 'white',
-                      borderRadius: '10px',
-                      padding: '0.625rem 1.25rem',
+                      borderRadius: '12px',
+                      padding: '0.75rem 1.5rem',
                       fontSize: '0.95rem',
                       fontWeight: '600',
                       border: 'none',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      marginTop: '1rem'
                     }}
                   >
-                    Leave
+                    + Invite Friends
                   </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Room Code Modal */}
-      {showCodeModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '2rem'
-        }}>
-          <div className="card" style={{
-            maxWidth: '500px',
-            width: '100%',
-            borderRadius: '24px',
-            position: 'relative'
-          }}>
-            <button
-              onClick={() => setShowCodeModal(false)}
-              style={{
-                position: 'absolute',
-                top: '1rem',
-                right: '1rem',
-                background: 'none',
-                border: 'none',
-                fontSize: '1.5rem',
-                cursor: 'pointer',
-                color: 'var(--text-dark)'
-              }}
-            >
-              ×
-            </button>
-
-            <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-              Room Created
-            </h2>
-
-            <p style={{ fontSize: '1rem', color: 'var(--text-light)', marginBottom: '1.5rem' }}>
-              Share this code with your friends so they can join:
-            </p>
-
-            <div style={{
-              padding: '2rem',
-              backgroundColor: 'var(--pastel-yellow)',
-              borderRadius: '16px',
-              textAlign: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', marginBottom: '0.5rem' }}>
-                Room Code
-              </p>
-              <div style={{
-                fontSize: '3rem',
-                fontWeight: '700',
-                fontFamily: 'monospace',
-                letterSpacing: '0.5rem',
-                color: 'var(--text-dark)',
-                marginBottom: '1rem'
-              }}>
-                {newRoomCode}
+                )}
               </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(newRoomCode)
-                  alert('Room code copied to clipboard!')
-                }}
-                style={{
-                  backgroundColor: 'var(--pastel-pink)',
-                  color: 'white',
-                  borderRadius: '10px',
-                  padding: '0.625rem 1.25rem',
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  cursor: 'pointer'
-                }}
-              >
-                Copy Code
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowCodeModal(false)}
-              style={{
-                width: '100%',
-                backgroundColor: 'var(--pastel-blue)',
-                color: 'var(--text-dark)',
-                borderRadius: '12px',
-                padding: '0.875rem 1.5rem',
-                fontSize: '1rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Got it!
-            </button>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
