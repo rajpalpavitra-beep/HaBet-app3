@@ -16,6 +16,8 @@ function CreateBet() {
   const [loading, setLoading] = useState(false)
   const [loadingFriends, setLoadingFriends] = useState(true)
   const [error, setError] = useState('')
+  const [notificationTime, setNotificationTime] = useState('18:00') // Default 6:00 PM
+  const [notificationFrequency, setNotificationFrequency] = useState('daily') // daily, weekly, custom
 
   useEffect(() => {
     if (user) {
