@@ -387,50 +387,63 @@ function YourBets() {
                           No friends yet. Add friends to hold you accountable!
                         </p>
                       ) : (
-                        <div style={{ position: 'relative' }}>
-                          <select
-                            multiple
-                            size={Math.min(friends.length, 5)}
-                            value={selectedFriends}
-                            onChange={(e) => {
-                              const selected = Array.from(e.target.selectedOptions, option => option.value)
-                              setSelectedFriends(selected)
-                            }}
-                            style={{
-                              width: '100%',
-                              minHeight: '150px',
-                              maxHeight: '200px',
-                              borderRadius: '12px',
-                              border: '2px solid #E8E8E8',
-                              padding: '0.5rem',
-                              fontSize: '1rem',
-                              fontFamily: 'var(--font-handwritten)',
-                              backgroundColor: 'white',
-                              cursor: 'pointer',
-                              overflowY: 'auto',
-                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-                            }}
-                          >
-                            {friends.map((friend) => {
-                              const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
-                              const profile = friend.friendProfile
-                              const displayName = profile?.nickname || profile?.email?.split('@')[0] || 'Friend'
-                              
-                              return (
-                                <option
-                                  key={friendId}
-                                  value={friendId}
-                                  style={{
-                                    padding: '0.75rem',
-                                    fontSize: '1rem',
-                                    fontFamily: 'var(--font-handwritten)'
-                                  }}
-                                >
-                                  {profile?.emoji_avatar || '👤'} {displayName}
-                                </option>
-                              )
-                            })}
-                          </select>
+                        <div style={{ position: 'relative', width: '100%' }}>
+                          <div style={{
+                            border: '2px solid var(--pastel-purple)',
+                            borderRadius: '12px',
+                            backgroundColor: 'white',
+                            padding: '0.5rem',
+                            boxShadow: '0 4px 12px rgba(212, 165, 245, 0.2)'
+                          }}>
+                            <select
+                              multiple
+                              size={Math.min(Math.max(friends.length, 3), 6)}
+                              value={selectedFriends}
+                              onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions, option => option.value)
+                                setSelectedFriends(selected)
+                              }}
+                              style={{
+                                width: '100%',
+                                minHeight: '180px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                padding: '0.5rem',
+                                fontSize: '1rem',
+                                fontFamily: 'var(--font-handwritten)',
+                                backgroundColor: 'transparent',
+                                cursor: 'pointer',
+                                outline: 'none'
+                              }}
+                            >
+                              {friends.map((friend) => {
+                                const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
+                                const profile = friend.friendProfile
+                                const displayName = profile?.nickname || profile?.email?.split('@')[0] || 'Friend'
+                                const isSelected = selectedFriends.includes(friendId)
+                                
+                                return (
+                                  <option
+                                    key={friendId}
+                                    value={friendId}
+                                    selected={isSelected}
+                                    style={{
+                                      padding: '0.75rem 1rem',
+                                      fontSize: '1rem',
+                                      fontFamily: 'var(--font-handwritten)',
+                                      backgroundColor: isSelected ? 'var(--pastel-blue)' : 'transparent',
+                                      color: 'var(--text-dark)',
+                                      borderRadius: '8px',
+                                      margin: '0.25rem 0',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {profile?.emoji_avatar || '👤'} {displayName}
+                                  </option>
+                                )
+                              })}
+                            </select>
+                          </div>
                           <p style={{
                             fontSize: '0.85rem',
                             color: 'var(--text-light)',
