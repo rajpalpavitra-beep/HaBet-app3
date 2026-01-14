@@ -275,30 +275,37 @@ function Friends() {
       let data = null
       let functionError = null
       
+      // Get response text first
+      const responseText = await emailResponse.text()
+      console.log('Email server response:', responseText, 'Status:', emailResponse.status)
+      
       if (!emailResponse.ok) {
-        const errorText = await emailResponse.text()
         try {
-          const errorJson = JSON.parse(errorText)
+          const errorJson = JSON.parse(responseText)
           functionError = { 
             message: errorJson.message || errorJson.error || `HTTP ${emailResponse.status}: ${emailResponse.statusText}`, 
             status: emailResponse.status 
           }
         } catch {
           functionError = { 
-            message: `HTTP ${emailResponse.status}: ${emailResponse.statusText} - ${errorText}`, 
+            message: `HTTP ${emailResponse.status}: ${emailResponse.statusText} - ${responseText}`, 
             status: emailResponse.status 
           }
         }
       } else {
         try {
-          data = await emailResponse.json()
-          data.success = true
+          data = JSON.parse(responseText)
+          // Ensure success flag is set
+          if (!data.success && !data.error) {
+            data.success = true
+          }
         } catch {
-          data = { success: true }
+          // If response is not JSON but status is OK, assume success
+          data = { success: true, message: 'Email sent successfully' }
         }
       }
       
-      console.log('Resend API response:', { data, error: functionError, status: emailResponse.status })
+      console.log('Email response parsed:', { data, error: functionError, status: emailResponse.status })
 
       if (functionError) {
         // Log the full error for debugging
@@ -358,8 +365,10 @@ function Friends() {
         }
       } else if (data) {
         // Check if the function returned success
-        if (data.success) {
+        if (data.success || data.messageId) {
           alert(`✅ Invitation email sent successfully to ${inviteEmail.trim()}!\n\nCheck their inbox for the invitation.`)
+          setInviteEmail('')
+          setError('')
         } else if (data.error) {
           alert(
             `Email Error: ${data.error}\n\n` +
@@ -367,10 +376,16 @@ function Friends() {
             `For now, you can manually share this link: ${inviteLink}`
           )
         } else {
-          alert(`Invitation email sent successfully to ${inviteEmail.trim()}!`)
+          // Assume success if we got data but no explicit error
+          alert(`✅ Invitation email sent successfully to ${inviteEmail.trim()}!`)
+          setInviteEmail('')
+          setError('')
         }
       } else {
+        // If we got here and no error, assume success
         alert(`✅ Invitation email sent successfully to ${inviteEmail.trim()}!`)
+        setInviteEmail('')
+        setError('')
       }
 
       setInviteEmail('')
