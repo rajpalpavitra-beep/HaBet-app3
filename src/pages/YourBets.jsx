@@ -16,6 +16,10 @@ function YourBets() {
     start_date: '',
     target_date: ''
   })
+  const [friends, setFriends] = useState([])
+  const [selectedFriends, setSelectedFriends] = useState([])
+  const [loadingFriends, setLoadingFriends] = useState(false)
+  const [currentAccountableFriends, setCurrentAccountableFriends] = useState([])
 
   useEffect(() => {
     if (user) {
@@ -41,7 +45,85 @@ function YourBets() {
     }
   }
 
-  const handleEdit = (bet) => {
+  const loadFriends = async () => {
+    try {
+      setLoadingFriends(true)
+      const { data, error } = await supabase
+        .from('friends')
+        .select(`
+          *,
+          requester:profiles!friends_requester_id_fkey(id, nickname, emoji_avatar, email),
+          addressee:profiles!friends_addressee_id_fkey(id, nickname, emoji_avatar, email)
+        `)
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+        .eq('status', 'accepted')
+
+      if (error) {
+        console.error('Error loading friends:', error)
+        throw error
+      }
+
+      const friendIds = (data || []).map(f => 
+        f.requester_id === user.id ? f.addressee_id : f.requester_id
+      )
+
+      if (friendIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, nickname, emoji_avatar, email')
+          .in('id', friendIds)
+
+        if (profilesError) {
+          console.error('Error loading profiles:', profilesError)
+          throw profilesError
+        }
+
+        const friendsWithProfiles = (data || []).map(f => {
+          const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
+          const profile = (profiles || []).find(p => p.id === friendId)
+          return {
+            ...f,
+            friendId: friendId,
+            friendProfile: profile
+          }
+        })
+
+        setFriends(friendsWithProfiles)
+      } else {
+        setFriends([])
+      }
+    } catch (err) {
+      console.error('Error loading friends:', err)
+    } finally {
+      setLoadingFriends(false)
+    }
+  }
+
+  const loadAccountableFriends = async (betId) => {
+    try {
+      const { data, error } = await supabase
+        .from('bet_accountability')
+        .select('friend_id')
+        .eq('bet_id', betId)
+
+      if (error) throw error
+      const friendIds = (data || []).map(af => af.friend_id)
+      setCurrentAccountableFriends(friendIds)
+      setSelectedFriends(friendIds)
+    } catch (err) {
+      console.error('Error loading accountable friends:', err)
+    }
+  }
+
+  const toggleFriend = (friendId) => {
+    if (selectedFriends.includes(friendId)) {
+      setSelectedFriends(selectedFriends.filter(id => id !== friendId))
+    } else {
+      setSelectedFriends([...selectedFriends, friendId])
+    }
+  }
+
+  const handleEdit = async (bet) => {
     setEditingBet(bet.id)
     setEditForm({
       title: bet.title || '',
@@ -50,10 +132,14 @@ function YourBets() {
       start_date: bet.start_date || '',
       target_date: bet.target_date || ''
     })
+    // Load friends and current accountable friends
+    await loadFriends()
+    await loadAccountableFriends(bet.id)
   }
 
   const handleSaveEdit = async () => {
     try {
+      // Update bet details
       const { error } = await supabase
         .from('bets')
         .update({
@@ -61,13 +147,39 @@ function YourBets() {
           goal: editForm.goal.trim(),
           stake: editForm.stake.trim(),
           start_date: editForm.start_date,
-          target_date: editForm.target_date
+          target_date: editForm.target_date,
+          verification_required: selectedFriends.length > 0
         })
         .eq('id', editingBet)
 
       if (error) throw error
 
+      // Update accountable friends
+      // First, remove old accountable friends
+      const { error: deleteError } = await supabase
+        .from('bet_accountability')
+        .delete()
+        .eq('bet_id', editingBet)
+
+      if (deleteError) throw deleteError
+
+      // Then, add new accountable friends
+      if (selectedFriends.length > 0) {
+        const accountabilityRecords = selectedFriends.map(friendId => ({
+          bet_id: editingBet,
+          friend_id: friendId
+        }))
+
+        const { error: insertError } = await supabase
+          .from('bet_accountability')
+          .insert(accountabilityRecords)
+
+        if (insertError) throw insertError
+      }
+
       setEditingBet(null)
+      setSelectedFriends([])
+      setCurrentAccountableFriends([])
       loadBets()
     } catch (err) {
       console.error('Error updating bet:', err)
@@ -84,6 +196,8 @@ function YourBets() {
       start_date: '',
       target_date: ''
     })
+    setSelectedFriends([])
+    setCurrentAccountableFriends([])
   }
 
   const handleDelete = async (betId) => {
@@ -252,6 +366,76 @@ function YourBets() {
                           }}
                         />
                       </div>
+                    </div>
+
+                    {/* Accountable Friends */}
+                    <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+                      <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
+                        Who Should Hold You Accountable?
+                      </label>
+                      {loadingFriends ? (
+                        <p style={{ color: 'var(--text-light)' }}>Loading friends...</p>
+                      ) : friends.length === 0 ? (
+                        <p style={{ color: 'var(--text-light)', padding: '1rem', backgroundColor: '#F9F9F9', borderRadius: '12px' }}>
+                          No friends yet. Add friends to hold you accountable!
+                        </p>
+                      ) : (
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '0.75rem',
+                          padding: '1rem',
+                          backgroundColor: '#F9F9F9',
+                          borderRadius: '12px',
+                          minHeight: '100px'
+                        }}>
+                          {friends.map((friend) => {
+                            const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
+                            const profile = friend.friendProfile
+                            const isSelected = selectedFriends.includes(friendId)
+
+                            return (
+                              <button
+                                key={friendId}
+                                type="button"
+                                onClick={() => toggleFriend(friendId)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.5rem',
+                                  padding: '0.75rem 1rem',
+                                  borderRadius: '12px',
+                                  border: isSelected ? '2px solid var(--pastel-pink)' : '2px solid #E8E8E8',
+                                  backgroundColor: isSelected ? '#FFF' : 'white',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  fontSize: '1rem'
+                                }}
+                              >
+                                <div style={{
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '50%',
+                                  backgroundColor: '#F9F9F9',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '1.5rem',
+                                  flexShrink: 0,
+                                  border: '2px solid var(--pastel-purple)',
+                                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)'
+                                }}>
+                                  {profile?.emoji_avatar || '👤'}
+                                </div>
+                                <span>
+                                  {profile?.nickname || profile?.email?.split('@')[0] || 'Friend'}
+                                </span>
+                                {isSelected && <span>✓</span>}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-3">
