@@ -12,6 +12,17 @@ DROP POLICY IF EXISTS "Room creators can view all members" ON room_members;
 DROP POLICY IF EXISTS "Users can join rooms" ON room_members;
 DROP POLICY IF EXISTS "Users can leave rooms" ON room_members;
 
+-- Drop all policies on room_members (catch-all approach)
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE tablename = 'room_members') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON room_members';
+    END LOOP;
+END $$;
+
 -- Create a SECURITY DEFINER function to check if user is room creator
 -- This avoids recursion by using a function that bypasses RLS
 CREATE OR REPLACE FUNCTION is_room_creator(room_uuid UUID)
@@ -50,14 +61,26 @@ CREATE POLICY "Users can leave rooms"
 -- Fix game_rooms policies
 -- ============================================
 
--- Drop existing game_rooms policies
+-- Drop ALL existing game_rooms policies (drop all possible policy names)
 DROP POLICY IF EXISTS "Users can view rooms they're in" ON game_rooms;
 DROP POLICY IF EXISTS "Users can view rooms they're members of" ON game_rooms;
+DROP POLICY IF EXISTS "Users can view rooms they created" ON game_rooms;
 DROP POLICY IF EXISTS "Users can create rooms" ON game_rooms;
 DROP POLICY IF EXISTS "Users can update their own rooms" ON game_rooms;
 DROP POLICY IF EXISTS "Room creators can update their rooms" ON game_rooms;
 DROP POLICY IF EXISTS "Users can delete their own rooms" ON game_rooms;
 DROP POLICY IF EXISTS "Room creators can delete their rooms" ON game_rooms;
+
+-- Drop all policies on game_rooms (catch-all approach)
+DO $$ 
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT policyname FROM pg_policies WHERE tablename = 'game_rooms') 
+    LOOP
+        EXECUTE 'DROP POLICY IF EXISTS ' || quote_ident(r.policyname) || ' ON game_rooms';
+    END LOOP;
+END $$;
 
 -- Policy: Users can view rooms they created
 CREATE POLICY "Users can view rooms they created"
