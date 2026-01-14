@@ -300,35 +300,59 @@ function Friends() {
 
       if (functionError) {
         // Log the full error for debugging
-        console.error('Edge Function error:', functionError)
+        console.error('Email server error:', functionError)
         console.error('Full error object:', JSON.stringify(functionError, null, 2))
         
         // Extract detailed error message
         let errorMessage = functionError.message || 'Unknown error'
         let errorStatus = functionError.status || 'N/A'
         
-        // Check if it's a 401 error
-        if (errorStatus === 401 || errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
-          alert(
-            `Authentication Error (401):\n\n` +
-            `The function requires you to be logged in.\n\n` +
-            `Please:\n` +
-            `1. Make sure you're logged into the app\n` +
-            `2. Refresh the page and try again\n` +
-            `3. If it still fails, log out and log back in\n\n` +
-            `Error: ${errorMessage}`
-          )
+        // Provide helpful error messages based on environment
+        if (!isProduction) {
+          // Local development errors
+          if (errorStatus === 404 || errorMessage.includes('404') || errorMessage.includes('Failed to fetch')) {
+            alert(
+              `Email Server Not Running (404):\n\n` +
+              `The local email server is not running.\n\n` +
+              `To fix:\n` +
+              `1. Open a new terminal\n` +
+              `2. Run: npm run email-server\n` +
+              `3. Or run: npm run dev:full (starts both servers)\n` +
+              `4. Then try sending the invite again\n\n` +
+              `Error: ${errorMessage}`
+            )
+          } else {
+            alert(
+              `Error sending email (Status: ${errorStatus}):\n\n${errorMessage}\n\n` +
+              `Make sure:\n` +
+              `1. Email server is running (npm run email-server)\n` +
+              `2. Gmail credentials are set in .env file\n` +
+              `3. Check browser console (F12) for details\n\n` +
+              `For now, you can manually share this link: ${inviteLink}`
+            )
+          }
         } else {
-          // Show the actual error
-          alert(
-            `Error sending email (Status: ${errorStatus}):\n\n${errorMessage}\n\n` +
-            `Please check:\n` +
-            `1. You're logged into the app\n` +
-            `2. Edge Function is deployed\n` +
-            `3. Resend API key is configured\n` +
-            `4. Check browser console (F12) for details\n\n` +
-            `For now, you can manually share this link: ${inviteLink}`
-          )
+          // Production errors
+          if (errorStatus === 401 || errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+            alert(
+              `Authentication Error (401):\n\n` +
+              `The function requires you to be logged in.\n\n` +
+              `Please:\n` +
+              `1. Make sure you're logged into the app\n` +
+              `2. Refresh the page and try again\n` +
+              `3. If it still fails, log out and log back in\n\n` +
+              `Error: ${errorMessage}`
+            )
+          } else {
+            alert(
+              `Error sending email (Status: ${errorStatus}):\n\n${errorMessage}\n\n` +
+              `Please check:\n` +
+              `1. You're logged into the app\n` +
+              `2. Gmail credentials are set in Vercel environment variables\n` +
+              `3. Check browser console (F12) for details\n\n` +
+              `For now, you can manually share this link: ${inviteLink}`
+            )
+          }
         }
       } else if (data) {
         // Check if the function returned success
