@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
+import { useButtonState } from '../utils/buttonStates'
 
 function RoomDashboard() {
   const { id: roomId } = useParams()
@@ -14,7 +15,7 @@ function RoomDashboard() {
   const [isMember, setIsMember] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
   const [showInviteInput, setShowInviteInput] = useState(false)
-  const [inviteLoading, setInviteLoading] = useState(false)
+  const inviteState = useButtonState()
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -136,7 +137,7 @@ function RoomDashboard() {
     }
 
     try {
-      setInviteLoading(true)
+      inviteState.setLoading()
       setError('')
 
       // Get inviter profile
@@ -185,14 +186,14 @@ function RoomDashboard() {
 
       if (inviteError) throw inviteError
 
-      alert(`✅ Invitation sent to ${inviteEmail.trim()}!`)
+      inviteState.setSuccess(`Invitation sent to ${inviteEmail.trim()}!`)
       setInviteEmail('')
       setShowInviteInput(false)
+      setError('')
     } catch (err) {
       console.error('Error sending invite:', err)
+      inviteState.setError(err.message || 'Failed to send invitation')
       setError(err.message || 'Failed to send invitation')
-    } finally {
-      setInviteLoading(false)
     }
   }
 
@@ -296,57 +297,48 @@ function RoomDashboard() {
 
           {/* Invite Input */}
           {showInviteInput && (
-            <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
-              <input
-                type="email"
-                placeholder="Enter email to invite"
-                value={inviteEmail}
-                onChange={(e) => {
-                  setInviteEmail(e.target.value)
-                  setError('')
-                }}
-                onKeyPress={(e) => e.key === 'Enter' && sendRoomInvite()}
-                style={{
-                  flex: 1,
-                  minWidth: '200px',
-                  borderRadius: '12px',
-                  border: error ? '2px solid var(--error-red)' : '2px solid #E8E8E8',
-                  padding: '0.75rem 1rem',
-                  fontSize: '0.95rem',
-                  backgroundColor: 'white'
-                }}
-              />
-              <button
-                onClick={sendRoomInvite}
-                disabled={inviteLoading}
-                style={{
-                  backgroundColor: 'var(--pastel-mint)',
-                  color: 'var(--text-dark)',
-                  borderRadius: '12px',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.95rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  cursor: inviteLoading ? 'not-allowed' : 'pointer',
-                  opacity: inviteLoading ? 0.6 : 1,
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {inviteLoading ? 'Sending...' : 'Send Invite'}
-              </button>
-            </div>
-          )}
-
-          {error && (
-            <div style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: 'var(--error-light)',
-              color: 'var(--error-red)',
-              borderRadius: '12px',
-              marginBottom: '1rem',
-              fontSize: '0.9rem'
-            }}>
-              {error}
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                <input
+                  type="email"
+                  placeholder="Enter email to invite"
+                  value={inviteEmail}
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value)
+                    setError('')
+                    inviteState.reset()
+                  }}
+                  onKeyPress={(e) => e.key === 'Enter' && !inviteState.isLoading && sendRoomInvite()}
+                  style={{
+                    flex: 1,
+                    minWidth: '200px',
+                    borderRadius: '12px',
+                    border: error || inviteState.isError ? '2px solid var(--error-red)' : '2px solid #E8E8E8',
+                    padding: '0.875rem 1.25rem',
+                    fontSize: '1rem',
+                    backgroundColor: 'white',
+                    fontFamily: 'var(--font-body)'
+                  }}
+                />
+                <button
+                  onClick={sendRoomInvite}
+                  disabled={inviteState.isLoading}
+                  className={`btn-success btn-md ${inviteState.isSuccess ? 'btn-success-state' : ''} ${inviteState.isError ? 'btn-error-state' : ''} ${inviteState.isLoading ? 'btn-loading' : ''}`}
+                  style={{ whiteSpace: 'nowrap' }}
+                >
+                  {inviteState.isLoading ? 'Sending...' : inviteState.isSuccess ? 'Sent!' : 'Send Invite'}
+                </button>
+              </div>
+              {inviteState.message && (
+                <div className={inviteState.isSuccess ? 'success-box' : 'error-box'}>
+                  {inviteState.message}
+                </div>
+              )}
+              {error && !inviteState.message && (
+                <div className="error-box">
+                  {error}
+                </div>
+              )}
             </div>
           )}
 
@@ -385,38 +377,18 @@ function RoomDashboard() {
         </div>
 
         {/* Navigation */}
-        <div className="flex gap-4 mb-6" style={{ flexWrap: 'wrap' }}>
+        <div className="button-group button-group-full mb-6">
           <button
             onClick={() => navigate(`/room/${roomId}/create-bet`)}
-            style={{
-              flex: 1,
-              minWidth: '200px',
-              backgroundColor: 'var(--pastel-pink)',
-              color: 'white',
-              borderRadius: '20px',
-              padding: '1.5rem',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            className="btn-primary btn-lg"
+            style={{ flex: 1, minWidth: '200px' }}
           >
             + Create Bet
           </button>
           <button
             onClick={() => navigate(`/room/${roomId}/leaderboard`)}
-            style={{
-              flex: 1,
-              minWidth: '200px',
-              backgroundColor: 'var(--pastel-yellow)',
-              color: 'var(--text-dark)',
-              borderRadius: '20px',
-              padding: '1.5rem',
-              fontSize: '1.1rem',
-              fontWeight: '600',
-              border: 'none',
-              cursor: 'pointer'
-            }}
+            className="btn-warning btn-lg"
+            style={{ flex: 1, minWidth: '200px' }}
           >
             Leaderboard
           </button>
@@ -475,16 +447,7 @@ function RoomDashboard() {
                         e.stopPropagation()
                         navigate(`/bet/${bet.id}`)
                       }}
-                      style={{
-                        backgroundColor: 'var(--pastel-purple)',
-                        color: 'white',
-                        borderRadius: '10px',
-                        padding: '0.625rem 1.25rem',
-                        fontSize: '0.95rem',
-                        fontWeight: '600',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
+                      className="btn-purple btn-sm"
                     >
                       View
                     </button>

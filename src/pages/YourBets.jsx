@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useButtonState } from '../utils/buttonStates'
 
 function YourBets() {
   const { user } = useAuth()
@@ -146,6 +147,8 @@ function YourBets() {
 
   const handleSaveEdit = async () => {
     try {
+      saveState.setLoading()
+      
       // Update bet details
       const { error } = await supabase
         .from('bets')
@@ -186,13 +189,19 @@ function YourBets() {
         if (insertError) throw insertError
       }
 
-      setEditingBet(null)
-      setSelectedFriends([])
-      setCurrentAccountableFriends([])
-      loadBets()
+      saveState.setSuccess('Bet updated successfully!')
+      setTimeout(() => {
+        setEditingBet(null)
+        setSelectedFriends([])
+        setCurrentAccountableFriends([])
+        loadBets()
+        saveState.reset()
+      }, 1500)
     } catch (err) {
       console.error('Error updating bet:', err)
-      alert('Failed to update bet: ' + err.message)
+      const errorMsg = err.message || 'Failed to update bet'
+      saveState.setError(errorMsg)
+      alert('Failed to update bet: ' + errorMsg)
     }
   }
 
@@ -239,17 +248,8 @@ function YourBets() {
       <div className="container">
         <button
           onClick={() => navigate('/')}
-          style={{
-            backgroundColor: 'var(--pastel-purple)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '0.5rem 1rem',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            marginBottom: '2rem'
-          }}
+          className="btn-purple btn-sm"
+          style={{ marginBottom: '2rem' }}
         >
           ← Back
         </button>
@@ -651,20 +651,11 @@ function YourBets() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 mt-4">
+                    <div className="button-group mt-4">
                       <button
                         onClick={() => navigate(`/bet/${bet.id}`)}
-                        style={{
-                          flex: 1,
-                          backgroundColor: 'var(--pastel-pink)',
-                          color: 'white',
-                          borderRadius: '12px',
-                          padding: '0.875rem 1.5rem',
-                          fontSize: '1rem',
-                          fontWeight: '600',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
+                        className="btn-primary btn-md"
+                        style={{ flex: 1 }}
                       >
                         View Details
                       </button>

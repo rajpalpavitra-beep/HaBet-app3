@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import CheckInPopup from '../components/CheckInPopup'
+import { useButtonState } from '../utils/buttonStates'
 
 function BetDetail() {
   const { id } = useParams()
@@ -15,6 +16,9 @@ function BetDetail() {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [progress, setProgress] = useState({ totalDays: 0, completedDays: 0, percentage: 0 })
+  const wonState = useButtonState()
+  const lostState = useButtonState()
+  const verifyState = useButtonState()
 
   useEffect(() => {
     if (user && id) {
@@ -120,6 +124,7 @@ function BetDetail() {
 
   const handleVerify = async (accountabilityId) => {
     try {
+      verifyState.setLoading()
       const { error } = await supabase
         .from('bet_accountability')
         .update({ 
@@ -129,10 +134,12 @@ function BetDetail() {
         .eq('id', accountabilityId)
 
       if (error) throw error
+      verifyState.setSuccess('Verified!')
       loadBet()
+      setTimeout(() => verifyState.reset(), 2000)
     } catch (err) {
       console.error('Error verifying:', err)
-      alert('Failed to verify: ' + err.message)
+      verifyState.setError(err.message || 'Failed to verify')
     }
   }
 
@@ -153,15 +160,18 @@ function BetDetail() {
 
     try {
       setUpdating(true)
+      wonState.setLoading()
       const { error } = await supabase
         .from('bets')
         .update({ status: 'won', resolved_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error
+      wonState.setSuccess('Bet marked as won!')
       loadBet()
     } catch (err) {
       console.error('Error updating bet:', err)
+      wonState.setError(err.message || 'Failed to update bet')
       alert('Failed to update bet: ' + err.message)
     } finally {
       setUpdating(false)
@@ -173,15 +183,18 @@ function BetDetail() {
 
     try {
       setUpdating(true)
+      lostState.setLoading()
       const { error } = await supabase
         .from('bets')
         .update({ status: 'lost', resolved_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error
+      lostState.setSuccess('Bet marked as lost')
       loadBet()
     } catch (err) {
       console.error('Error updating bet:', err)
+      lostState.setError(err.message || 'Failed to update bet')
       alert('Failed to update bet: ' + err.message)
     } finally {
       setUpdating(false)
@@ -227,7 +240,7 @@ function BetDetail() {
   return (
     <div className="container">
       <button 
-        className="btn-secondary mb-3" 
+        className="btn-secondary btn-sm" 
         onClick={() => navigate('/')}
         style={{ marginBottom: '1.5rem' }}
       >
@@ -386,18 +399,10 @@ function BetDetail() {
                   {isAccountableFriend && !af.verified && af.friend_id === user.id && (
                     <button
                       onClick={() => handleVerify(af.id)}
-                      style={{
-                        backgroundColor: 'var(--pastel-mint)',
-                        color: 'var(--text-dark)',
-                        borderRadius: '10px',
-                        padding: '0.625rem 1.25rem',
-                        fontSize: '0.95rem',
-                        fontWeight: '600',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
+                      disabled={verifyState.isLoading}
+                      className={`btn-success btn-sm ${verifyState.isSuccess ? 'btn-success-state' : ''} ${verifyState.isError ? 'btn-error-state' : ''} ${verifyState.isLoading ? 'btn-loading' : ''}`}
                     >
-                      Verify ✓
+                      {verifyState.isLoading ? 'Verifying...' : verifyState.isSuccess ? 'Verified!' : 'Verify ✓'}
                     </button>
                   )}
                   {bet.user_id === user.id && !af.verified && (

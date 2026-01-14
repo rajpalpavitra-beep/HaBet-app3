@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useButtonState } from '../utils/buttonStates'
 
 function GameRooms() {
   const { user } = useAuth()
@@ -12,7 +13,8 @@ function GameRooms() {
   const [error, setError] = useState('')
   const [inviteEmail, setInviteEmail] = useState('')
   const [invitingRoomId, setInvitingRoomId] = useState(null)
-  const [inviteLoading, setInviteLoading] = useState(false)
+  const inviteState = useButtonState()
+  const createRoomState = useButtonState()
 
   useEffect(() => {
     if (user) {
@@ -103,7 +105,7 @@ function GameRooms() {
     }
 
     try {
-      setInviteLoading(true)
+      inviteState.setLoading()
       setError('')
 
       // Get room info
@@ -159,14 +161,15 @@ function GameRooms() {
 
       if (inviteError) throw inviteError
 
-      alert(`✅ Invitation sent to ${inviteEmail.trim()}!`)
+      inviteState.setSuccess(`Invitation sent to ${inviteEmail.trim()}!`)
       setInviteEmail('')
       setInvitingRoomId(null)
+      setError('')
     } catch (err) {
       console.error('Error sending invite:', err)
-      setError(err.message || 'Failed to send invitation')
-    } finally {
-      setInviteLoading(false)
+      const errorMsg = err.message || 'Failed to send invitation'
+      setError(errorMsg)
+      inviteState.setError(errorMsg)
     }
   }
 
@@ -201,17 +204,8 @@ function GameRooms() {
       <div className="container">
         <button
           onClick={() => navigate('/')}
-          style={{
-            backgroundColor: 'var(--pastel-purple)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '0.5rem 1rem',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            marginBottom: '2rem'
-          }}
+          className="btn-purple btn-sm"
+          style={{ marginBottom: '2rem' }}
         >
           ← Back
         </button>
@@ -220,7 +214,12 @@ function GameRooms() {
           Group Rooms
         </h1>
 
-        {error && (
+        {createRoomState.message && (
+          <div className={createRoomState.isSuccess ? 'success-box mb-4' : 'error-box mb-4'}>
+            {createRoomState.message}
+          </div>
+        )}
+        {error && !createRoomState.message && (
           <div className="error-box mb-4">
             {error}
           </div>
@@ -247,19 +246,11 @@ function GameRooms() {
             />
             <button
               onClick={createRoom}
-              style={{
-                backgroundColor: 'var(--pastel-pink)',
-                color: 'white',
-                borderRadius: '12px',
-                padding: '0.875rem 1.75rem',
-                fontSize: '1rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap'
-              }}
+              disabled={createRoomState.isLoading}
+              className={`btn-primary btn-md ${createRoomState.isSuccess ? 'btn-success-state' : ''} ${createRoomState.isError ? 'btn-error-state' : ''} ${createRoomState.isLoading ? 'btn-loading' : ''}`}
+              style={{ whiteSpace: 'nowrap' }}
             >
-              Create
+              {createRoomState.isLoading ? 'Creating...' : createRoomState.isSuccess ? 'Created!' : 'Create'}
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { useButtonState } from '../utils/buttonStates'
 
 function CreateBet() {
   const { user } = useAuth()
@@ -18,6 +19,7 @@ function CreateBet() {
   const [error, setError] = useState('')
   const [notificationTime, setNotificationTime] = useState('18:00') // Default 6:00 PM
   const [notificationFrequency, setNotificationFrequency] = useState('daily') // daily, weekly, custom
+  const submitState = useButtonState()
 
   useEffect(() => {
     if (user) {
@@ -101,6 +103,8 @@ function CreateBet() {
 
     try {
       setLoading(true)
+      submitState.setLoading()
+      setError('')
       
           // Create bet
           const { data: betData, error: insertError } = await supabase
@@ -148,10 +152,15 @@ function CreateBet() {
         console.log('Accountable friends added successfully:', accountabilityData)
       }
 
-      navigate('/')
+      submitState.setSuccess('Bet created successfully!')
+      setTimeout(() => {
+        navigate('/')
+      }, 1500)
     } catch (err) {
       console.error('Error creating bet:', err)
-      setError(err.message || 'Failed to create bet')
+      const errorMsg = err.message || 'Failed to create bet'
+      setError(errorMsg)
+      submitState.setError(errorMsg)
     } finally {
       setLoading(false)
     }
@@ -162,17 +171,8 @@ function CreateBet() {
       <div className="container">
         <button
           onClick={() => navigate('/')}
-          style={{
-            backgroundColor: 'var(--pastel-purple)',
-            color: 'white',
-            borderRadius: '12px',
-            padding: '0.5rem 1rem',
-            fontSize: '0.9rem',
-            fontWeight: '600',
-            border: 'none',
-            cursor: 'pointer',
-            marginBottom: '2rem'
-          }}
+          className="btn-purple btn-sm"
+          style={{ marginBottom: '2rem' }}
         >
           ← Back
         </button>
@@ -182,7 +182,12 @@ function CreateBet() {
             Create New Bet
           </h1>
 
-          {error && (
+          {submitState.message && (
+            <div className={submitState.isSuccess ? 'success-box' : 'error-box'}>
+              {submitState.message}
+            </div>
+          )}
+          {error && !submitState.message && (
             <div className="error-box">
               {error}
             </div>
@@ -458,24 +463,14 @@ function CreateBet() {
               </p>
             </div>
 
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+            <div className="button-group" style={{ marginTop: '1rem' }}>
               <button
                 type="submit"
-                disabled={loading}
-                style={{
-                  backgroundColor: 'var(--pastel-pink)',
-                  color: 'white',
-                  borderRadius: '12px',
-                  padding: '1rem 2rem',
-                  fontSize: '1.05rem',
-                  fontWeight: '600',
-                  border: 'none',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.6 : 1,
-                  flex: 1
-                }}
+                disabled={loading || submitState.isLoading}
+                className={`btn-primary btn-lg ${submitState.isSuccess ? 'btn-success-state' : ''} ${submitState.isError ? 'btn-error-state' : ''} ${submitState.isLoading ? 'btn-loading' : ''}`}
+                style={{ flex: 1 }}
               >
-                {loading ? 'Creating...' : 'Create Bet'}
+                {submitState.isLoading ? 'Creating...' : submitState.isSuccess ? 'Created!' : 'Create Bet'}
               </button>
             </div>
           </form>
