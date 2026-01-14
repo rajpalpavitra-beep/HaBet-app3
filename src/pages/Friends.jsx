@@ -97,31 +97,28 @@ function Friends() {
     try {
       setError('')
       
-      const searchEmailLower = searchEmail.trim().toLowerCase()
+      const searchEmailTrimmed = searchEmail.trim()
+      const searchEmailLower = searchEmailTrimmed.toLowerCase()
       
       // Find user by email (case-insensitive search)
-      // First try exact match
-      let { data: profiles, error: profileError } = await supabase
+      // Get all profiles and filter client-side for case-insensitive match
+      const { data: allProfiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
-        .eq('email', searchEmail.trim())
-        .maybeSingle()
-
-      // If not found, try case-insensitive search
-      if (profileError || !profiles) {
-        const { data: allProfiles } = await supabase
-          .from('profiles')
-          .select('id, email')
-        
-        if (allProfiles) {
-          profiles = allProfiles.find(p => 
-            p.email && p.email.toLowerCase() === searchEmailLower
-          )
-        }
+      
+      if (profileError) {
+        console.error('Error fetching profiles:', profileError)
+        setError('Error searching for user. Please try again.')
+        return
       }
 
+      // Find matching profile (case-insensitive)
+      const profiles = allProfiles?.find(p => 
+        p.email && p.email.toLowerCase() === searchEmailLower
+      )
+
       if (!profiles) {
-        setError(`User not found. Make sure "${searchEmail.trim()}" has signed up and created a profile.`)
+        setError(`User not found. Make sure "${searchEmailTrimmed}" has signed up. If they just signed up, their profile might not be created yet - ask them to log in once to create their profile.`)
         return
       }
 
