@@ -20,6 +20,8 @@ function YourBets() {
   const [selectedFriends, setSelectedFriends] = useState([])
   const [loadingFriends, setLoadingFriends] = useState(false)
   const [currentAccountableFriends, setCurrentAccountableFriends] = useState([])
+  const [notificationTime, setNotificationTime] = useState('18:00')
+  const [notificationFrequency, setNotificationFrequency] = useState('daily')
 
   useEffect(() => {
     if (user) {
@@ -132,6 +134,9 @@ function YourBets() {
       start_date: bet.start_date || '',
       target_date: bet.target_date || ''
     })
+    // Set notification settings
+    setNotificationTime(bet.notification_time || '18:00')
+    setNotificationFrequency(bet.notification_frequency || 'daily')
     // Load friends and current accountable friends
     await loadFriends()
     await loadAccountableFriends(bet.id)
@@ -148,7 +153,9 @@ function YourBets() {
           stake: editForm.stake.trim(),
           start_date: editForm.start_date,
           target_date: editForm.target_date,
-          verification_required: selectedFriends.length > 0
+          verification_required: selectedFriends.length > 0,
+          notification_time: notificationTime,
+          notification_frequency: notificationFrequency
         })
         .eq('id', editingBet)
 
@@ -383,6 +390,7 @@ function YourBets() {
                         <div style={{ position: 'relative' }}>
                           <select
                             multiple
+                            size={Math.min(friends.length, 5)}
                             value={selectedFriends}
                             onChange={(e) => {
                               const selected = Array.from(e.target.selectedOptions, option => option.value)
@@ -390,19 +398,17 @@ function YourBets() {
                             }}
                             style={{
                               width: '100%',
-                              minHeight: '120px',
+                              minHeight: '150px',
+                              maxHeight: '200px',
                               borderRadius: '12px',
                               border: '2px solid #E8E8E8',
-                              padding: '0.875rem 1.25rem',
+                              padding: '0.5rem',
                               fontSize: '1rem',
                               fontFamily: 'var(--font-handwritten)',
                               backgroundColor: 'white',
                               cursor: 'pointer',
-                              appearance: 'none',
-                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'right 1rem center',
-                              paddingRight: '3rem'
+                              overflowY: 'auto',
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
                             }}
                           >
                             {friends.map((friend) => {
@@ -458,9 +464,67 @@ function YourBets() {
                                 )
                               })}
                             </div>
-                          )}
+                  )}
+                </div>
+              )}
+            </div>
+
+                    {/* Check-In Notification Settings */}
+                    <div className="flex flex-col" style={{ gap: '0.75rem' }}>
+                      <label className="handwritten" style={{ fontSize: '1.15rem', marginBottom: '0.25rem' }}>
+                        Check-In Reminder Settings
+                      </label>
+                      <div className="flex gap-4" style={{ flexWrap: 'wrap' }}>
+                        <div className="flex flex-col" style={{ flex: '1', minWidth: '200px', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.95rem', color: 'var(--text-dark)', fontWeight: '500' }}>
+                            Reminder Time
+                          </label>
+                          <input
+                            type="time"
+                            value={notificationTime}
+                            onChange={(e) => setNotificationTime(e.target.value)}
+                            style={{
+                              borderRadius: '12px',
+                              border: '2px solid #E8E8E8',
+                              padding: '0.875rem 1.25rem',
+                              fontSize: '1rem',
+                              backgroundColor: 'white',
+                              width: '100%'
+                            }}
+                          />
                         </div>
-                      )}
+                        <div className="flex flex-col" style={{ flex: '1', minWidth: '200px', gap: '0.5rem' }}>
+                          <label style={{ fontSize: '0.95rem', color: 'var(--text-dark)', fontWeight: '500' }}>
+                            Frequency
+                          </label>
+                          <select
+                            value={notificationFrequency}
+                            onChange={(e) => setNotificationFrequency(e.target.value)}
+                            style={{
+                              borderRadius: '12px',
+                              border: '2px solid #E8E8E8',
+                              padding: '0.875rem 1.25rem',
+                              fontSize: '1rem',
+                              fontFamily: 'var(--font-handwritten)',
+                              backgroundColor: 'white',
+                              cursor: 'pointer',
+                              width: '100%'
+                            }}
+                          >
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                        </div>
+                      </div>
+                      <p style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-light)',
+                        fontStyle: 'italic',
+                        marginTop: '0.25rem'
+                      }}>
+                        You'll receive reminders to check in at {notificationTime} {notificationFrequency === 'daily' ? 'every day' : notificationFrequency === 'weekly' ? 'once a week' : 'based on your custom schedule'} from {editForm.start_date ? new Date(editForm.start_date).toLocaleDateString() : 'start date'} to {editForm.target_date ? new Date(editForm.target_date).toLocaleDateString() : 'end date'}
+                      </p>
                     </div>
 
                     <div className="flex gap-3">
