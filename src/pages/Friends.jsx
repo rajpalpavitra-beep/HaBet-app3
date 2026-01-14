@@ -240,10 +240,9 @@ function Friends() {
         .single()
 
       const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
-      // Use environment variable for app URL, or detect production URL
-      // For production, set VITE_APP_URL to your deployed URL (e.g., https://yourdomain.com)
-      const appUrl = import.meta.env.VITE_APP_URL || 
-        (window.location.hostname === 'localhost' ? 'https://your-deployed-url.com' : window.location.origin)
+      // Always use production URL for invites (never localhost)
+      // This ensures friends can access the link
+      const appUrl = import.meta.env.VITE_APP_URL || 'https://ha-bet-app3.vercel.app'
       const inviteLink = `${appUrl}/login`
       const appName = 'HaBet'
 
