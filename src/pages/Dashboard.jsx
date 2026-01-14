@@ -242,17 +242,16 @@ function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: '12px', 
                 backgroundColor: 'var(--pastel-blue)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: 'var(--text-dark)'
-              }}>B</div>
+                fontSize: '1.8rem',
+                boxShadow: '0 2px 8px rgba(186, 225, 255, 0.4)'
+              }}>📊</div>
               <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Your Bets</h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
