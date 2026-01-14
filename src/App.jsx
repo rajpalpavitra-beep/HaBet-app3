@@ -10,6 +10,9 @@ import GameRooms from './pages/GameRooms'
 import ProfileSettings from './pages/ProfileSettings'
 import YourBets from './pages/YourBets'
 import Notifications from './pages/Notifications'
+import RoomDashboard from './pages/RoomDashboard'
+import RoomCreateBet from './pages/RoomCreateBet'
+import RoomLeaderboard from './pages/RoomLeaderboard'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -103,6 +106,30 @@ function App() {
           element={
             <ProtectedRoute>
               <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:id"
+          element={
+            <ProtectedRoute>
+              <RoomDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:id/create-bet"
+          element={
+            <ProtectedRoute>
+              <RoomCreateBet />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/room/:id/leaderboard"
+          element={
+            <ProtectedRoute>
+              <RoomLeaderboard />
             </ProtectedRoute>
           }
         />
