@@ -351,21 +351,17 @@ function CreateBet() {
                         const isSelected = selectedFriends.includes(friendId)
                         
                         return (
-                          <option
-                            key={friendId}
-                            value={friendId}
-                            selected={isSelected}
-                            style={{
-                              padding: '0.75rem 1rem',
-                              fontSize: '1rem',
-                              fontFamily: 'var(--font-handwritten)',
-                              backgroundColor: isSelected ? 'var(--pastel-blue)' : 'transparent',
-                              color: 'var(--text-dark)',
-                              borderRadius: '8px',
-                              margin: '0.25rem 0',
-                              cursor: 'pointer'
-                            }}
-                          >
+                                <option
+                                  key={friendId}
+                                  value={friendId}
+                                  style={{
+                                    padding: '0.75rem 1rem',
+                                    fontSize: '1rem',
+                                    fontFamily: 'var(--font-handwritten)',
+                                    color: 'var(--text-dark)',
+                                    cursor: 'pointer'
+                                  }}
+                                >
                             {profile?.emoji_avatar || '👤'} {displayName}
                           </option>
                         )
