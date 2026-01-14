@@ -250,11 +250,22 @@ function Friends() {
       // In production (Vercel), use the API route
       // In development (localhost), use local email server
       const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1')
-      const emailServerUrl = isProduction 
-        ? `${window.location.origin}/api/send-invite-email`
-        : (import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite')
+      let emailServerUrl
       
-      console.log('Email server URL:', emailServerUrl, 'isProduction:', isProduction)
+      if (isProduction) {
+        emailServerUrl = `${window.location.origin}/api/send-invite-email`
+      } else {
+        // Local development - use local email server
+        emailServerUrl = import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite'
+        // Make sure it's the full URL with /send-invite endpoint
+        if (!emailServerUrl.includes('/send-invite')) {
+          emailServerUrl = emailServerUrl.endsWith('/') 
+            ? `${emailServerUrl}send-invite`
+            : `${emailServerUrl}/send-invite`
+        }
+      }
+      
+      console.log('Email server URL:', emailServerUrl, 'isProduction:', isProduction, 'hostname:', window.location.hostname)
       
       console.log('Sending email via:', emailServerUrl, '(isProduction:', isProduction, ')')
       
