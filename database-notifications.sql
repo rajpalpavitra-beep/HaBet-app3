@@ -79,26 +79,29 @@ CREATE TRIGGER on_check_in_notify
   WHEN (NEW.completed = true)
   EXECUTE FUNCTION notify_check_in();
 
--- Function to notify bet creator when verification is needed
+-- Function to notify accountable friends when they're added to a bet
 CREATE OR REPLACE FUNCTION notify_verification_request()
 RETURNS TRIGGER AS $$
 DECLARE
   bet_record RECORD;
-  friend_record RECORD;
+  creator_profile RECORD;
 BEGIN
-  -- Get the bet details
-  SELECT * INTO bet_record FROM bets WHERE id = NEW.bet_id;
+  -- Get the bet details and creator profile
+  SELECT b.*, p.nickname, p.email INTO bet_record, creator_profile.nickname, creator_profile.email
+  FROM bets b
+  LEFT JOIN profiles p ON b.user_id = p.id
+  WHERE b.id = NEW.bet_id;
   
-  -- Notify the bet creator that verification is needed
+  -- Notify the accountable friend that they need to verify this bet
   INSERT INTO notifications (user_id, type, title, message, bet_id, related_user_id)
   VALUES (
-    bet_record.user_id,
+    NEW.friend_id,
     'verification_request',
-    'Verification Needed',
-    (SELECT nickname || COALESCE(' (' || email || ')', '') FROM profiles WHERE id = NEW.friend_id) || 
-    ' needs to verify your bet "' || bet_record.title || '"',
+    'Verification Request',
+    COALESCE(creator_profile.nickname, split_part(creator_profile.email, '@', 1), 'Someone') || 
+    ' added you as an accountable friend for "' || bet_record.title || '". Please verify when they complete their goal!',
     NEW.bet_id,
-    NEW.friend_id
+    bet_record.user_id
   );
   
   RETURN NEW;
