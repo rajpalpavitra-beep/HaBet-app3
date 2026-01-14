@@ -28,58 +28,52 @@ function CreateBet() {
   const loadFriends = async () => {
     try {
       setLoadingFriends(true)
-      const { data, error } = await supabase
+      // First, get all accepted friend relationships
+      const { data: friendsData, error: friendsError } = await supabase
         .from('friends')
-        .select(`
-          *,
-          requester:profiles!friends_requester_id_fkey(id, nickname, emoji_avatar, email),
-          addressee:profiles!friends_addressee_id_fkey(id, nickname, emoji_avatar, email)
-        `)
+        .select('requester_id, addressee_id')
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted')
 
-      if (error) {
-        console.error('Error loading friends:', error)
-        throw error
+      if (friendsError) {
+        console.error('Error loading friends:', friendsError)
+        throw friendsError
       }
 
-      console.log('Friends loaded:', data)
-
-      // Get friend profiles
-      const friendIds = (data || []).map(f => 
+      // Get friend IDs (the other user in each relationship)
+      const friendIds = (friendsData || []).map(f => 
         f.requester_id === user.id ? f.addressee_id : f.requester_id
       )
 
-      console.log('Friend IDs:', friendIds)
-
-      if (friendIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, nickname, emoji_avatar, email')
-          .in('id', friendIds)
-
-        if (profilesError) {
-          console.error('Error loading profiles:', profilesError)
-          throw profilesError
-        }
-
-        console.log('Profiles loaded:', profiles)
-
-        const friendsWithProfiles = (data || []).map(f => {
-          const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
-          const profile = (profiles || []).find(p => p.id === friendId)
-          return {
-            ...f,
-            friendId: friendId,
-            friendProfile: profile
-          }
-        })
-
-        console.log('Friends with profiles:', friendsWithProfiles)
-        setFriends(friendsWithProfiles)
-      } else {
+      if (friendIds.length === 0) {
         setFriends([])
+        return
       }
+
+      // Fetch profiles for all friends
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, nickname, emoji_avatar, email')
+        .in('id', friendIds)
+
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError)
+        throw profilesError
+      }
+
+      // Combine friend relationships with profiles
+      const friendsWithProfiles = (friendsData || []).map(f => {
+        const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
+        const profile = (profiles || []).find(p => p.id === friendId)
+        return {
+          requester_id: f.requester_id,
+          addressee_id: f.addressee_id,
+          friendId: friendId,
+          friendProfile: profile
+        }
+      }).filter(f => f.friendProfile) // Only include friends with profiles
+
+      setFriends(friendsWithProfiles)
     } catch (err) {
       console.error('Error loading friends:', err)
       setError('Failed to load friends: ' + err.message)
