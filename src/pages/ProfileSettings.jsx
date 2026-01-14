@@ -3,24 +3,15 @@ import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-const AVATAR_COLORS = [
-  { bg: '#FFB3BA', text: '#4A4A4A' }, // Pastel Pink
-  { bg: '#BAE1FF', text: '#4A4A4A' }, // Pastel Blue
-  { bg: '#FFFACD', text: '#4A4A4A' }, // Pastel Yellow
-  { bg: '#E6D7F0', text: '#4A4A4A' }, // Pastel Lavender
-  { bg: '#D4A5F5', text: 'white' }, // Pastel Purple
-  { bg: '#B3E5D0', text: '#4A4A4A' }, // Pastel Mint
-  { bg: '#FFD4A3', text: '#4A4A4A' }, // Pastel Peach
-  { bg: '#C7CEEA', text: '#4A4A4A' }, // Pastel Periwinkle
-  { bg: '#FFB6C1', text: '#4A4A4A' }, // Light Pink
-  { bg: '#E0BBE4', text: '#4A4A4A' }, // Lavender
-]
+const EMOJI_OPTIONS = ['👤', '😊', '🎯', '🚀', '⭐', '🔥', '💪', '🎨', '🌈', '🌟', '🎪', '🎭', '🤖', '🦄', '🐱', '🐶', '🦁', '🐼', '🐨', '🦊', '🎮', '📚', '🎵', '🎬', '🏆', '💎', '🌙', '☀️', '🌸', '🍀']
 
 function ProfileSettings() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [nickname, setNickname] = useState('')
-  const [avatarColor, setAvatarColor] = useState(0)
+  const [emoji, setEmoji] = useState('👤')
+  const [customEmoji, setCustomEmoji] = useState('')
+  const [showCustomInput, setShowCustomInput] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -45,9 +36,11 @@ function ProfileSettings() {
 
       if (data) {
         setNickname(data.nickname || '')
-        // Get avatar color index from emoji_avatar if it exists, otherwise default to 0
-        const colorIndex = data.avatar_color_index !== undefined ? data.avatar_color_index : 0
-        setAvatarColor(colorIndex)
+        setEmoji(data.emoji_avatar || '👤')
+        setCustomEmoji(data.emoji_avatar && !EMOJI_OPTIONS.includes(data.emoji_avatar) ? data.emoji_avatar : '')
+        if (data.emoji_avatar && !EMOJI_OPTIONS.includes(data.emoji_avatar)) {
+          setShowCustomInput(true)
+        }
       } else {
         // Create profile if it doesn't exist
         const { error: insertError } = await supabase
@@ -56,7 +49,7 @@ function ProfileSettings() {
             id: user.id,
             email: user.email,
             nickname: '',
-            avatar_color_index: 0
+            emoji_avatar: '👤'
           }])
 
         if (insertError) throw insertError
@@ -75,13 +68,15 @@ function ProfileSettings() {
       setError('')
       setSuccess('')
 
+      const finalEmoji = showCustomInput && customEmoji.trim() ? customEmoji.trim() : emoji
+
       const { error: updateError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           email: user.email,
           nickname: nickname.trim(),
-          avatar_color_index: avatarColor,
+          emoji_avatar: finalEmoji,
           updated_at: new Date().toISOString()
         })
 
@@ -153,10 +148,10 @@ function ProfileSettings() {
           )}
 
           <div className="flex flex-col" style={{ gap: '2rem' }}>
-            {/* Avatar Color Selection */}
+            {/* Emoji Avatar Selection */}
             <div className="flex flex-col" style={{ gap: '1rem' }}>
               <label className="handwritten" style={{ fontSize: '1.3rem' }}>
-                Choose Your Avatar Color
+                Choose Your Avatar Emoji
               </label>
               <div style={{
                 display: 'flex',
@@ -166,28 +161,31 @@ function ProfileSettings() {
                 backgroundColor: '#F9F9F9',
                 borderRadius: '12px'
               }}>
-                {AVATAR_COLORS.map((color, index) => (
+                {EMOJI_OPTIONS.map((emojiOption) => (
                   <button
-                    key={index}
+                    key={emojiOption}
                     type="button"
-                    onClick={() => setAvatarColor(index)}
+                    onClick={() => {
+                      setEmoji(emojiOption)
+                      setShowCustomInput(false)
+                      setCustomEmoji('')
+                    }}
                     style={{
+                      fontSize: '2.5rem',
                       width: '60px',
                       height: '60px',
                       borderRadius: '12px',
-                      border: avatarColor === index ? '3px solid var(--pastel-pink)' : '2px solid #E8E8E8',
-                      backgroundColor: color.bg,
+                      border: emoji === emojiOption && !showCustomInput ? '3px solid var(--pastel-pink)' : '2px solid #E8E8E8',
+                      backgroundColor: emoji === emojiOption && !showCustomInput ? '#FFF' : 'white',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.5rem',
-                      fontWeight: 'bold',
-                      color: color.text
+                      boxShadow: emoji === emojiOption && !showCustomInput ? '0 2px 8px rgba(255, 179, 186, 0.3)' : 'none'
                     }}
                     onMouseEnter={(e) => {
-                      if (avatarColor !== index) {
+                      if (emoji !== emojiOption || showCustomInput) {
                         e.target.style.transform = 'scale(1.1)'
                       }
                     }}
@@ -195,25 +193,91 @@ function ProfileSettings() {
                       e.target.style.transform = 'scale(1)'
                     }}
                   >
-                    {(nickname || user?.email || 'U').charAt(0).toUpperCase()}
+                    {emojiOption}
                   </button>
                 ))}
               </div>
+              
+              {/* Custom Emoji Option */}
+              <div style={{
+                padding: '1rem',
+                backgroundColor: '#F9F9F9',
+                borderRadius: '12px',
+                border: showCustomInput ? '2px solid var(--pastel-pink)' : '2px solid #E8E8E8'
+              }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomInput(!showCustomInput)
+                      if (!showCustomInput) {
+                        setCustomEmoji('')
+                      } else {
+                        setEmoji('👤')
+                      }
+                    }}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      borderRadius: '8px',
+                      border: '2px solid var(--pastel-purple)',
+                      backgroundColor: showCustomInput ? 'var(--pastel-purple)' : 'white',
+                      color: showCustomInput ? 'white' : 'var(--pastel-purple)',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: '600'
+                    }}
+                  >
+                    {showCustomInput ? '✓ Custom Emoji' : '+ Custom Emoji'}
+                  </button>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', margin: 0 }}>
+                    Add your own emoji
+                  </p>
+                </div>
+                {showCustomInput && (
+                  <input
+                    type="text"
+                    value={customEmoji}
+                    onChange={(e) => {
+                      const value = e.target.value
+                      // Allow emoji input (can be multiple characters for complex emojis)
+                      if (value.length <= 2) {
+                        setCustomEmoji(value)
+                        if (value.trim()) {
+                          setEmoji(value.trim())
+                        }
+                      }
+                    }}
+                    placeholder="Enter emoji (e.g., 🎉, 🏀, 🎸)"
+                    maxLength={2}
+                    style={{
+                      width: '100%',
+                      borderRadius: '8px',
+                      border: '2px solid #E8E8E8',
+                      padding: '0.75rem 1rem',
+                      fontSize: '1.5rem',
+                      textAlign: 'center',
+                      fontFamily: 'var(--font-handwritten)',
+                      backgroundColor: 'white'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Preview */}
               <div style={{
                 width: '100px',
                 height: '100px',
                 borderRadius: '50%',
-                backgroundColor: AVATAR_COLORS[avatarColor].bg,
+                backgroundColor: '#F9F9F9',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '3rem',
-                fontWeight: 'bold',
-                color: AVATAR_COLORS[avatarColor].text,
+                fontSize: '4rem',
                 margin: '0 auto',
-                border: '3px solid var(--pastel-pink)'
+                border: '3px solid var(--pastel-pink)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
               }}>
-                {(nickname || user?.email || 'U').charAt(0).toUpperCase()}
+                {showCustomInput && customEmoji.trim() ? customEmoji.trim() : emoji}
               </div>
             </div>
 

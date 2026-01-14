@@ -53,7 +53,7 @@ function BetDetail() {
         .from('bet_accountability')
         .select(`
           *,
-          friend:profiles!bet_accountability_friend_id_fkey(id, nickname, avatar_color_index, email)
+          friend:profiles!bet_accountability_friend_id_fkey(id, nickname, emoji_avatar, email)
         `)
         .eq('bet_id', betId)
 
@@ -363,16 +363,16 @@ function BetDetail() {
                       width: '48px',
                       height: '48px',
                       borderRadius: '50%',
-                      backgroundColor: 'var(--pastel-purple)',
+                      backgroundColor: '#F9F9F9',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '1.5rem',
-                      fontWeight: '600',
-                      color: 'white',
-                      flexShrink: 0
+                      fontSize: '2rem',
+                      flexShrink: 0,
+                      border: '2px solid var(--pastel-purple)',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                     }}>
-                      {(af.friend?.nickname || af.friend?.email || 'F').charAt(0).toUpperCase()}
+                      {af.friend?.emoji_avatar || '👤'}
                     </div>
                     <div>
                       <p style={{ fontWeight: '600', margin: 0 }}>

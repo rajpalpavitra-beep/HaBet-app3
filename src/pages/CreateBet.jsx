@@ -30,8 +30,8 @@ function CreateBet() {
         .from('friends')
         .select(`
           *,
-          requester:profiles!friends_requester_id_fkey(id, nickname, avatar_color_index, email),
-          addressee:profiles!friends_addressee_id_fkey(id, nickname, avatar_color_index, email)
+          requester:profiles!friends_requester_id_fkey(id, nickname, emoji_avatar, email),
+          addressee:profiles!friends_addressee_id_fkey(id, nickname, emoji_avatar, email)
         `)
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted')
@@ -46,7 +46,7 @@ function CreateBet() {
       if (friendIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, nickname, avatar_color_index, email')
+          .select('id, nickname, emoji_avatar, email')
           .in('id', friendIds)
 
         if (profilesError) throw profilesError
@@ -320,19 +320,19 @@ function CreateBet() {
                         }}
                       >
                         <div style={{
-                          width: '32px',
-                          height: '32px',
+                          width: '36px',
+                          height: '36px',
                           borderRadius: '50%',
-                          backgroundColor: 'var(--pastel-purple)',
+                          backgroundColor: '#F9F9F9',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1rem',
-                          fontWeight: '600',
-                          color: 'white',
-                          flexShrink: 0
+                          fontSize: '1.5rem',
+                          flexShrink: 0,
+                          border: '2px solid var(--pastel-purple)',
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)'
                         }}>
-                          {(profile?.nickname || profile?.email || 'F').charAt(0).toUpperCase()}
+                          {profile?.emoji_avatar || '👤'}
                         </div>
                         <span>
                           {profile?.nickname || profile?.email?.split('@')[0] || 'Friend'}

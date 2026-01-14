@@ -3,19 +3,6 @@ import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-const AVATAR_COLORS = [
-  { bg: '#FFB3BA', text: '#4A4A4A' },
-  { bg: '#BAE1FF', text: '#4A4A4A' },
-  { bg: '#FFFACD', text: '#4A4A4A' },
-  { bg: '#E6D7F0', text: '#4A4A4A' },
-  { bg: '#D4A5F5', text: 'white' },
-  { bg: '#B3E5D0', text: '#4A4A4A' },
-  { bg: '#FFD4A3', text: '#4A4A4A' },
-  { bg: '#C7CEEA', text: '#4A4A4A' },
-  { bg: '#FFB6C1', text: '#4A4A4A' },
-  { bg: '#E0BBE4', text: '#4A4A4A' },
-]
-
 function Dashboard() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
@@ -177,20 +164,16 @@ function Dashboard() {
               width: '80px',
               height: '80px',
               borderRadius: '50%',
-              backgroundColor: profile?.avatar_color_index !== undefined 
-                ? AVATAR_COLORS[profile.avatar_color_index]?.bg || 'var(--pastel-purple)'
-                : 'var(--pastel-purple)',
+              backgroundColor: '#F9F9F9',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '2rem',
-              fontWeight: '600',
-              color: profile?.avatar_color_index !== undefined
-                ? (AVATAR_COLORS[profile.avatar_color_index]?.text || 'white')
-                : 'white',
-              flexShrink: 0
+              fontSize: '3rem',
+              flexShrink: 0,
+              border: '3px solid var(--pastel-purple)',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
             }}>
-              {(profile?.nickname || getDisplayName()).charAt(0).toUpperCase()}
+              {profile?.emoji_avatar || '👤'}
             </div>
             <div style={{ flex: 1 }}>
               <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
@@ -284,17 +267,16 @@ function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: '12px', 
                 backgroundColor: 'var(--pastel-yellow)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: 'var(--text-dark)'
-              }}>L</div>
+                fontSize: '1.8rem',
+                boxShadow: '0 2px 8px rgba(255, 250, 205, 0.4)'
+              }}>🏆</div>
               <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Leaderboard</h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
@@ -309,17 +291,16 @@ function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: '12px', 
                 backgroundColor: 'var(--pastel-mint)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: 'var(--text-dark)'
-              }}>F</div>
+                fontSize: '1.8rem',
+                boxShadow: '0 2px 8px rgba(179, 229, 208, 0.4)'
+              }}>👥</div>
               <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Friends</h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
@@ -334,17 +315,16 @@ function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ 
-                width: '40px', 
-                height: '40px', 
-                borderRadius: '8px', 
+                width: '48px', 
+                height: '48px', 
+                borderRadius: '12px', 
                 backgroundColor: 'var(--pastel-purple)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center',
-                fontSize: '1.2rem',
-                fontWeight: 'bold',
-                color: 'white'
-              }}>R</div>
+                fontSize: '1.8rem',
+                boxShadow: '0 2px 8px rgba(212, 165, 245, 0.4)'
+              }}>🎮</div>
               <h3 className="handwritten" style={{ margin: 0, fontSize: '1.4rem' }}>Game Rooms</h3>
             </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0, paddingLeft: '3.5rem' }}>
