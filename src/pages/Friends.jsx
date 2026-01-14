@@ -97,15 +97,31 @@ function Friends() {
     try {
       setError('')
       
-      // Find user by email
-      const { data: profiles, error: profileError } = await supabase
+      const searchEmailLower = searchEmail.trim().toLowerCase()
+      
+      // Find user by email (case-insensitive search)
+      // First try exact match
+      let { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, email')
         .eq('email', searchEmail.trim())
-        .single()
+        .maybeSingle()
 
+      // If not found, try case-insensitive search
       if (profileError || !profiles) {
-        setError('User not found')
+        const { data: allProfiles } = await supabase
+          .from('profiles')
+          .select('id, email')
+        
+        if (allProfiles) {
+          profiles = allProfiles.find(p => 
+            p.email && p.email.toLowerCase() === searchEmailLower
+          )
+        }
+      }
+
+      if (!profiles) {
+        setError(`User not found. Make sure "${searchEmail.trim()}" has signed up and created a profile.`)
         return
       }
 
