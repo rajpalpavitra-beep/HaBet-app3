@@ -227,7 +227,11 @@ function Friends() {
         .single()
 
       const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
-      const inviteLink = `${window.location.origin}/login`
+      // Use environment variable for app URL, or detect production URL
+      // For production, set VITE_APP_URL to your deployed URL (e.g., https://yourdomain.com)
+      const appUrl = import.meta.env.VITE_APP_URL || 
+        (window.location.hostname === 'localhost' ? 'https://your-deployed-url.com' : window.location.origin)
+      const inviteLink = `${appUrl}/login`
       const appName = 'HaBet'
 
       // Call local email server (Gmail SMTP)
