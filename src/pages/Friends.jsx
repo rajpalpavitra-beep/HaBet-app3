@@ -230,68 +230,22 @@ function Friends() {
       const inviteLink = `${window.location.origin}/login`
       const appName = 'HaBet'
 
-      // Call Resend API directly from frontend (bypassing Edge Function to avoid 401 errors)
-      const resendApiKey = import.meta.env.VITE_RESEND_API_KEY || ''
+      // Call local email server (Gmail SMTP)
+      const emailServerUrl = import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001'
       
-      if (!resendApiKey) {
-        setError('Email service not configured. Please set VITE_RESEND_API_KEY in .env file.')
-        setInviteLoading(false)
-        return
-      }
-
-      console.log('Sending email via Resend API directly...')
+      console.log('Sending email via Gmail SMTP...')
       
-      // Call Resend API directly
-      const emailResponse = await fetch('https://api.resend.com/emails', {
+      // Call local email server
+      const emailResponse = await fetch(`${emailServerUrl}/send-invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: 'HaBet <onboarding@resend.dev>',
-          to: [inviteEmail.trim()],
-          subject: `${userName} invited you to join ${appName}!`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>You've been invited to ${appName}!</title>
-              </head>
-              <body style="font-family: 'Fredoka', sans-serif; background-color: #f5f5f5; padding: 20px; margin: 0;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 24px; padding: 40px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
-                  <h1 style="font-family: 'Schoolbell', cursive; color: #333; font-size: 2.5rem; margin-bottom: 20px; text-align: center;">
-                    🎯 You've been invited!
-                  </h1>
-                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
-                    Hi there!
-                  </p>
-                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
-                    <strong>${userName}</strong> invited you to join <strong>${appName}</strong> - a fun way to bet on your habits and stay accountable!
-                  </p>
-                  <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 30px;">
-                    Join us and start betting on your habits today! 🚀
-                  </p>
-                  <div style="text-align: center; margin: 40px 0;">
-                    <a href="${inviteLink}" 
-                       style="display: inline-block; background-color: #FFB6C1; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(255, 182, 193, 0.3);">
-                      Join ${appName} Now
-                    </a>
-                  </div>
-                  <p style="font-size: 0.9rem; color: #999; text-align: center; margin-top: 40px;">
-                    Or copy and paste this link: <br>
-                    <a href="${inviteLink}" style="color: #FFB6C1; word-break: break-all;">${inviteLink}</a>
-                  </p>
-                  <hr style="border: none; border-top: 1px solid #eee; margin: 40px 0;">
-                  <p style="font-size: 0.85rem; color: #999; text-align: center;">
-                    If you didn't expect this email, you can safely ignore it.
-                  </p>
-                </div>
-              </body>
-            </html>
-          `,
+          to: inviteEmail.trim(),
+          fromName: userName,
+          inviteLink: inviteLink,
+          appName: appName,
         }),
       })
 
