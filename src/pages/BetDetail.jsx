@@ -432,24 +432,36 @@ function BetDetail() {
 
         {/* Action Buttons */}
         {bet.status === 'pending' && bet.user_id === user?.id && (
-          <div className="flex gap-3 mt-4">
+          <div className="button-group mt-4">
+            {wonState.message && (
+              <div className={wonState.isSuccess ? 'success-box' : 'error-box'}>
+                {wonState.message}
+              </div>
+            )}
+            {lostState.message && (
+              <div className={lostState.isSuccess ? 'success-box' : 'error-box'}>
+                {lostState.message}
+              </div>
+            )}
             <button 
-              className="btn-success" 
+              className={`btn-success btn-md ${wonState.isSuccess ? 'btn-success-state' : ''} ${wonState.isError ? 'btn-error-state' : ''} ${wonState.isLoading ? 'btn-loading' : ''}`}
               onClick={handleMarkWon}
-              disabled={updating || !canMarkComplete()}
+              disabled={updating || wonState.isLoading || !canMarkComplete()}
               style={{
+                flex: 1,
                 opacity: canMarkComplete() ? 1 : 0.5,
                 cursor: canMarkComplete() ? 'pointer' : 'not-allowed'
               }}
             >
-              {canMarkComplete() ? 'Mark as Won ✓' : `Mark as Won (${pendingVerifications} verification${pendingVerifications !== 1 ? 's' : ''} needed)`}
+              {wonState.isLoading ? 'Updating...' : wonState.isSuccess ? 'Marked as Won!' : canMarkComplete() ? 'Mark as Won ✓' : `Mark as Won (${pendingVerifications} verification${pendingVerifications !== 1 ? 's' : ''} needed)`}
             </button>
             <button 
-              className="btn-primary" 
+              className={`btn-primary btn-md ${lostState.isSuccess ? 'btn-success-state' : ''} ${lostState.isError ? 'btn-error-state' : ''} ${lostState.isLoading ? 'btn-loading' : ''}`}
               onClick={handleMarkLost}
-              disabled={updating}
+              disabled={updating || lostState.isLoading}
+              style={{ flex: 1 }}
             >
-              Mark as Lost
+              {lostState.isLoading ? 'Updating...' : lostState.isSuccess ? 'Marked as Lost' : 'Mark as Lost ✗'}
             </button>
           </div>
         )}
