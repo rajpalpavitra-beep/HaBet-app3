@@ -247,13 +247,18 @@ function Friends() {
       const inviteLink = `${appUrl}/login`
       const appName = 'HaBet'
 
-      // Call local email server (Gmail SMTP)
-      const emailServerUrl = import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001'
+      // Determine email server URL
+      // In production (Vercel), use the API route
+      // In development, use local server if available, otherwise fallback to API route
+      const isProduction = window.location.hostname !== 'localhost'
+      const emailServerUrl = isProduction 
+        ? `${window.location.origin}/api/send-invite-email`
+        : (import.meta.env.VITE_EMAIL_SERVER_URL || `${window.location.origin}/api/send-invite-email`)
       
-      console.log('Sending email via Gmail SMTP...')
+      console.log('Sending email via:', emailServerUrl)
       
-      // Call local email server
-      const emailResponse = await fetch(`${emailServerUrl}/send-invite`, {
+      // Call email API (Vercel serverless function or local server)
+      const emailResponse = await fetch(emailServerUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
