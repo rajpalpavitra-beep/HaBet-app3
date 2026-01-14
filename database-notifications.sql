@@ -84,13 +84,15 @@ CREATE OR REPLACE FUNCTION notify_verification_request()
 RETURNS TRIGGER AS $$
 DECLARE
   bet_record RECORD;
-  creator_profile RECORD;
+  creator_nickname TEXT;
+  creator_email TEXT;
 BEGIN
-  -- Get the bet details and creator profile
-  SELECT b.*, p.nickname, p.email INTO bet_record, creator_profile.nickname, creator_profile.email
-  FROM bets b
-  LEFT JOIN profiles p ON b.user_id = p.id
-  WHERE b.id = NEW.bet_id;
+  -- Get the bet details
+  SELECT * INTO bet_record FROM bets WHERE id = NEW.bet_id;
+  
+  -- Get creator profile
+  SELECT nickname, email INTO creator_nickname, creator_email
+  FROM profiles WHERE id = bet_record.user_id;
   
   -- Notify the accountable friend that they need to verify this bet
   INSERT INTO notifications (user_id, type, title, message, bet_id, related_user_id)
@@ -98,7 +100,7 @@ BEGIN
     NEW.friend_id,
     'verification_request',
     'Verification Request',
-    COALESCE(creator_profile.nickname, split_part(creator_profile.email, '@', 1), 'Someone') || 
+    COALESCE(creator_nickname, split_part(creator_email, '@', 1), 'Someone') || 
     ' added you as an accountable friend for "' || bet_record.title || '". Please verify when they complete their goal!',
     NEW.bet_id,
     bet_record.user_id
