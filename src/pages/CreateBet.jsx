@@ -36,12 +36,19 @@ function CreateBet() {
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted')
 
-      if (error) throw error
+      if (error) {
+        console.error('Error loading friends:', error)
+        throw error
+      }
+
+      console.log('Friends loaded:', data)
 
       // Get friend profiles
       const friendIds = (data || []).map(f => 
         f.requester_id === user.id ? f.addressee_id : f.requester_id
       )
+
+      console.log('Friend IDs:', friendIds)
 
       if (friendIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
@@ -49,23 +56,31 @@ function CreateBet() {
           .select('id, nickname, emoji_avatar, email')
           .in('id', friendIds)
 
-        if (profilesError) throw profilesError
+        if (profilesError) {
+          console.error('Error loading profiles:', profilesError)
+          throw profilesError
+        }
+
+        console.log('Profiles loaded:', profiles)
 
         const friendsWithProfiles = (data || []).map(f => {
           const friendId = f.requester_id === user.id ? f.addressee_id : f.requester_id
           const profile = (profiles || []).find(p => p.id === friendId)
           return {
             ...f,
+            friendId: friendId,
             friendProfile: profile
           }
         })
 
+        console.log('Friends with profiles:', friendsWithProfiles)
         setFriends(friendsWithProfiles)
       } else {
         setFriends([])
       }
     } catch (err) {
       console.error('Error loading friends:', err)
+      setError('Failed to load friends: ' + err.message)
     } finally {
       setLoadingFriends(false)
     }
@@ -114,16 +129,25 @@ function CreateBet() {
 
       // Add accountable friends if any selected
       if (selectedFriends.length > 0) {
+        console.log('Adding accountable friends:', selectedFriends)
         const accountabilityRecords = selectedFriends.map(friendId => ({
           bet_id: betData.id,
           friend_id: friendId
         }))
 
-        const { error: accountabilityError } = await supabase
+        console.log('Accountability records to insert:', accountabilityRecords)
+
+        const { data: accountabilityData, error: accountabilityError } = await supabase
           .from('bet_accountability')
           .insert(accountabilityRecords)
+          .select()
 
-        if (accountabilityError) throw accountabilityError
+        if (accountabilityError) {
+          console.error('Error adding accountable friends:', accountabilityError)
+          throw accountabilityError
+        }
+        
+        console.log('Accountable friends added successfully:', accountabilityData)
       }
 
       navigate('/')
@@ -297,9 +321,11 @@ function CreateBet() {
                   minHeight: '100px'
                 }}>
                   {friends.map((friend) => {
-                    const friendId = friend.requester_id === user.id ? friend.addressee_id : friend.requester_id
+                    const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
                     const profile = friend.friendProfile
                     const isSelected = selectedFriends.includes(friendId)
+                    
+                    console.log('Friend:', friendId, 'Selected:', isSelected, 'Profile:', profile)
                     
                     return (
                       <button
