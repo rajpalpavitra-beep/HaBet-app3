@@ -12,6 +12,10 @@ function RoomDashboard() {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [isMember, setIsMember] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [showInviteInput, setShowInviteInput] = useState(false)
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (user && roomId) {
@@ -119,6 +123,79 @@ function RoomDashboard() {
     }
   }
 
+  const sendRoomInvite = async () => {
+    if (!inviteEmail.trim()) {
+      setError('Please enter an email address')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(inviteEmail.trim())) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    try {
+      setInviteLoading(true)
+      setError('')
+
+      // Get inviter profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('display_name, nickname')
+        .eq('id', user.id)
+        .single()
+
+      const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
+      const inviteLink = `${import.meta.env.VITE_APP_URL || 'https://ha-bet-app3.vercel.app'}/room/${roomId}`
+      const roomName = room?.name || 'a room'
+
+      // Determine email server URL
+      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1')
+      const emailServerUrl = isProduction
+        ? `${window.location.origin}/api/send-invite-email`
+        : (import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite')
+
+      // Send email invite
+      const emailResponse = await fetch(emailServerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: inviteEmail.trim(),
+          fromName: userName,
+          inviteLink: inviteLink,
+          appName: 'HaBet',
+          roomName: roomName
+        }),
+      })
+
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send invite email')
+      }
+
+      // Create invite record
+      const { error: inviteError } = await supabase
+        .from('room_invites')
+        .insert([{
+          room_id: roomId,
+          inviter_id: user.id,
+          invitee_email: inviteEmail.trim(),
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+        }])
+
+      if (inviteError) throw inviteError
+
+      alert(`✅ Invitation sent to ${inviteEmail.trim()}!`)
+      setInviteEmail('')
+      setShowInviteInput(false)
+    } catch (err) {
+      console.error('Error sending invite:', err)
+      setError(err.message || 'Failed to send invitation')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center" style={{ minHeight: '100vh' }}>
@@ -198,7 +275,81 @@ function RoomDashboard() {
 
         {/* Room Members */}
         <div className="card mb-6" style={{ borderRadius: '24px' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.5rem' }}>Members</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="handwritten" style={{ fontSize: '1.5rem', margin: 0 }}>Members</h2>
+            <button
+              onClick={() => setShowInviteInput(!showInviteInput)}
+              style={{
+                backgroundColor: 'var(--pastel-purple)',
+                color: 'white',
+                borderRadius: '10px',
+                padding: '0.625rem 1.25rem',
+                fontSize: '0.95rem',
+                fontWeight: '600',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              {showInviteInput ? 'Cancel' : '+ Invite Members'}
+            </button>
+          </div>
+
+          {/* Invite Input */}
+          {showInviteInput && (
+            <div className="flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+              <input
+                type="email"
+                placeholder="Enter email to invite"
+                value={inviteEmail}
+                onChange={(e) => {
+                  setInviteEmail(e.target.value)
+                  setError('')
+                }}
+                onKeyPress={(e) => e.key === 'Enter' && sendRoomInvite()}
+                style={{
+                  flex: 1,
+                  minWidth: '200px',
+                  borderRadius: '12px',
+                  border: error ? '2px solid var(--error-red)' : '2px solid #E8E8E8',
+                  padding: '0.75rem 1rem',
+                  fontSize: '0.95rem',
+                  backgroundColor: 'white'
+                }}
+              />
+              <button
+                onClick={sendRoomInvite}
+                disabled={inviteLoading}
+                style={{
+                  backgroundColor: 'var(--pastel-mint)',
+                  color: 'var(--text-dark)',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  border: 'none',
+                  cursor: inviteLoading ? 'not-allowed' : 'pointer',
+                  opacity: inviteLoading ? 0.6 : 1,
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {inviteLoading ? 'Sending...' : 'Send Invite'}
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div style={{
+              padding: '0.75rem 1rem',
+              backgroundColor: 'var(--error-light)',
+              color: 'var(--error-red)',
+              borderRadius: '12px',
+              marginBottom: '1rem',
+              fontSize: '0.9rem'
+            }}>
+              {error}
+            </div>
+          )}
+
           <div className="flex flex-wrap" style={{ gap: '0.75rem' }}>
             {members.map((member) => (
               <div
