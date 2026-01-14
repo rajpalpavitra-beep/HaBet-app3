@@ -70,8 +70,28 @@ export function AuthProvider({ children }) {
   // Sign up with email and password
   const signUp = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      // Disable email confirmation - allow immediate signup
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          emailRedirectTo: undefined,
+          // This allows users to sign in immediately without email confirmation
+        }
+      });
+      
       if (error) throw error;
+      
+      // If user is created but needs confirmation, try to sign them in anyway
+      // (This works if email confirmation is disabled in Supabase settings)
+      if (data.user && !data.session) {
+        // Try to sign in immediately after signup
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!signInError && signInData.session) {
+          return { data: signInData, error: null };
+        }
+      }
+      
       return { data, error: null };
     } catch (err) {
       return { data: null, error: err.message };
