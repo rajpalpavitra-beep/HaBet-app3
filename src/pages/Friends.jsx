@@ -254,6 +254,8 @@ function Friends() {
         ? `${window.location.origin}/api/send-invite-email`
         : (import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite')
       
+      console.log('Email server URL:', emailServerUrl, 'isProduction:', isProduction)
+      
       console.log('Sending email via:', emailServerUrl, '(isProduction:', isProduction, ')')
       
       // Call email API (Vercel serverless function or local server)
