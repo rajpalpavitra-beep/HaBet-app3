@@ -228,7 +228,7 @@ function GameRooms() {
         </button>
 
         <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
-          Game Rooms 🎮
+          Game Rooms
         </h1>
 
         {error && (
@@ -462,7 +462,7 @@ function GameRooms() {
             </button>
 
             <h2 className="handwritten" style={{ fontSize: '2rem', marginBottom: '1rem' }}>
-              Room Created! 🎉
+              Room Created
             </h2>
 
             <p style={{ fontSize: '1rem', color: 'var(--text-light)', marginBottom: '1.5rem' }}>

@@ -51,7 +51,7 @@ app.post('/send-invite', async (req, res) => {
           <body style="font-family: 'Fredoka', sans-serif; background-color: #f5f5f5; padding: 20px; margin: 0;">
             <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 24px; padding: 40px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
               <h1 style="font-family: 'Schoolbell', cursive; color: #333; font-size: 2.5rem; margin-bottom: 20px; text-align: center;">
-                🎯 You've been invited!
+                You've been invited!
               </h1>
               <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
                 Hi there!
@@ -60,7 +60,7 @@ app.post('/send-invite', async (req, res) => {
                 <strong>${fromName || 'Someone'}</strong> invited you to join <strong>${appName || 'HaBet'}</strong> - a fun way to bet on your habits and stay accountable!
               </p>
               <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 30px;">
-                Join us and start betting on your habits today! 🚀
+                Join us and start betting on your habits today!
               </p>
               <div style="text-align: center; margin: 40px 0;">
                 <a href="${inviteLink}" 

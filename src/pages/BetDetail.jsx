@@ -53,7 +53,7 @@ function BetDetail() {
         .from('bet_accountability')
         .select(`
           *,
-          friend:profiles!bet_accountability_friend_id_fkey(id, nickname, emoji_avatar, email)
+          friend:profiles!bet_accountability_friend_id_fkey(id, nickname, avatar_color_index, email)
         `)
         .eq('bet_id', betId)
 
@@ -251,12 +251,12 @@ function BetDetail() {
 
         {/* Goal and Stake */}
         <div className="mb-4">
-          <h3 className="handwritten" style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Goal 🎯</h3>
+          <h3 className="handwritten" style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Goal</h3>
           <p style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>{bet.goal || 'No goal set'}</p>
         </div>
 
         <div className="mb-4">
-          <h3 className="handwritten" style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Stake 💰</h3>
+          <h3 className="handwritten" style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>Stake</h3>
           <p style={{ fontSize: '1.1rem', marginTop: '0.5rem' }}>{bet.stake || 'No stake set'}</p>
         </div>
 
@@ -282,7 +282,7 @@ function BetDetail() {
           border: '2px solid var(--pastel-blue)'
         }}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="handwritten" style={{ fontSize: '1.5rem', margin: 0 }}>Check-In Progress 📈</h3>
+            <h3 className="handwritten" style={{ fontSize: '1.5rem', margin: 0 }}>Check-In Progress</h3>
             {bet.status === 'pending' && (
               <button
                 onClick={() => setShowCheckInPopup(true)}
@@ -343,7 +343,7 @@ function BetDetail() {
         {accountableFriends.length > 0 && (
           <div className="mb-4">
             <h3 className="handwritten" style={{ fontSize: '1.5rem', marginBottom: '0.75rem' }}>
-              Accountable Friends 👥
+              Accountable Friends
             </h3>
             <div className="flex flex-col" style={{ gap: '0.75rem' }}>
               {accountableFriends.map((af) => (
@@ -359,9 +359,21 @@ function BetDetail() {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <span style={{ fontSize: '2rem' }}>
-                      {af.friend?.emoji_avatar || '👤'}
-                    </span>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      backgroundColor: 'var(--pastel-purple)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      fontWeight: '600',
+                      color: 'white',
+                      flexShrink: 0
+                    }}>
+                      {(af.friend?.nickname || af.friend?.email || 'F').charAt(0).toUpperCase()}
+                    </div>
                     <div>
                       <p style={{ fontWeight: '600', margin: 0 }}>
                         {af.friend?.nickname || af.friend?.email?.split('@')[0] || 'Friend'}

@@ -30,8 +30,8 @@ function CreateBet() {
         .from('friends')
         .select(`
           *,
-          requester:profiles!friends_requester_id_fkey(id, nickname, emoji_avatar, email),
-          addressee:profiles!friends_addressee_id_fkey(id, nickname, emoji_avatar, email)
+          requester:profiles!friends_requester_id_fkey(id, nickname, avatar_color_index, email),
+          addressee:profiles!friends_addressee_id_fkey(id, nickname, avatar_color_index, email)
         `)
         .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
         .eq('status', 'accepted')
@@ -46,7 +46,7 @@ function CreateBet() {
       if (friendIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, nickname, emoji_avatar, email')
+          .select('id, nickname, avatar_color_index, email')
           .in('id', friendIds)
 
         if (profilesError) throw profilesError
@@ -157,7 +157,7 @@ function CreateBet() {
 
         <div className="card" style={{ maxWidth: '700px', margin: '0 auto', borderRadius: '24px' }}>
           <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
-            Create New Bet 🚀
+            Create New Bet
           </h1>
 
           {error && (
@@ -319,9 +319,21 @@ function CreateBet() {
                           fontSize: '1rem'
                         }}
                       >
-                        <span style={{ fontSize: '1.5rem' }}>
-                          {profile?.emoji_avatar || '👤'}
-                        </span>
+                        <div style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          backgroundColor: 'var(--pastel-purple)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          color: 'white',
+                          flexShrink: 0
+                        }}>
+                          {(profile?.nickname || profile?.email || 'F').charAt(0).toUpperCase()}
+                        </div>
                         <span>
                           {profile?.nickname || profile?.email?.split('@')[0] || 'Friend'}
                         </span>

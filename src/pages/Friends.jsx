@@ -364,7 +364,7 @@ function Friends() {
         </button>
 
         <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
-          Friends 👥
+          Friends
         </h1>
 
         {error && (
@@ -375,7 +375,7 @@ function Friends() {
 
         {/* Invite Friends Section */}
         <div className="card mb-6" style={{ borderRadius: '24px', backgroundColor: 'var(--pastel-yellow)' }}>
-          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Invite Friends 📧</h2>
+          <h2 className="handwritten mb-3" style={{ fontSize: '1.8rem' }}>Invite Friends</h2>
           <p style={{ fontSize: '0.95rem', color: 'var(--text-light)', marginBottom: '1rem' }}>
             Send an invitation email to friends who aren't on HaBet yet!
           </p>

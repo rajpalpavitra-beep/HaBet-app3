@@ -3,13 +3,24 @@ import { useAuth } from '../AuthContext'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 
-const EMOJI_OPTIONS = ['👤', '😊', '🎯', '🚀', '⭐', '🔥', '💪', '🎨', '🌈', '🌟', '🎪', '🎭', '🤖', '🦄', '🐱', '🐶', '🦁', '🐼', '🐨', '🦊']
+const AVATAR_COLORS = [
+  { bg: '#FFB3BA', text: '#4A4A4A' }, // Pastel Pink
+  { bg: '#BAE1FF', text: '#4A4A4A' }, // Pastel Blue
+  { bg: '#FFFACD', text: '#4A4A4A' }, // Pastel Yellow
+  { bg: '#E6D7F0', text: '#4A4A4A' }, // Pastel Lavender
+  { bg: '#D4A5F5', text: 'white' }, // Pastel Purple
+  { bg: '#B3E5D0', text: '#4A4A4A' }, // Pastel Mint
+  { bg: '#FFD4A3', text: '#4A4A4A' }, // Pastel Peach
+  { bg: '#C7CEEA', text: '#4A4A4A' }, // Pastel Periwinkle
+  { bg: '#FFB6C1', text: '#4A4A4A' }, // Light Pink
+  { bg: '#E0BBE4', text: '#4A4A4A' }, // Lavender
+]
 
 function ProfileSettings() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [nickname, setNickname] = useState('')
-  const [emoji, setEmoji] = useState('👤')
+  const [avatarColor, setAvatarColor] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -34,7 +45,9 @@ function ProfileSettings() {
 
       if (data) {
         setNickname(data.nickname || '')
-        setEmoji(data.emoji_avatar || '👤')
+        // Get avatar color index from emoji_avatar if it exists, otherwise default to 0
+        const colorIndex = data.avatar_color_index !== undefined ? data.avatar_color_index : 0
+        setAvatarColor(colorIndex)
       } else {
         // Create profile if it doesn't exist
         const { error: insertError } = await supabase
@@ -43,7 +56,7 @@ function ProfileSettings() {
             id: user.id,
             email: user.email,
             nickname: '',
-            emoji_avatar: '👤'
+            avatar_color_index: 0
           }])
 
         if (insertError) throw insertError
@@ -68,7 +81,7 @@ function ProfileSettings() {
           id: user.id,
           email: user.email,
           nickname: nickname.trim(),
-          emoji_avatar: emoji,
+          avatar_color_index: avatarColor,
           updated_at: new Date().toISOString()
         })
 
@@ -116,7 +129,7 @@ function ProfileSettings() {
 
         <div className="card" style={{ maxWidth: '600px', margin: '0 auto', borderRadius: '24px' }}>
           <h1 className="handwritten" style={{ fontSize: '2.5rem', marginBottom: '2rem' }}>
-            Profile Settings 👤
+            Profile Settings
           </h1>
 
           {error && (
@@ -140,10 +153,10 @@ function ProfileSettings() {
           )}
 
           <div className="flex flex-col" style={{ gap: '2rem' }}>
-            {/* Emoji Avatar Selection */}
+            {/* Avatar Color Selection */}
             <div className="flex flex-col" style={{ gap: '1rem' }}>
               <label className="handwritten" style={{ fontSize: '1.3rem' }}>
-                Choose Your Avatar
+                Choose Your Avatar Color
               </label>
               <div style={{
                 display: 'flex',
@@ -153,26 +166,28 @@ function ProfileSettings() {
                 backgroundColor: '#F9F9F9',
                 borderRadius: '12px'
               }}>
-                {EMOJI_OPTIONS.map((emojiOption) => (
+                {AVATAR_COLORS.map((color, index) => (
                   <button
-                    key={emojiOption}
+                    key={index}
                     type="button"
-                    onClick={() => setEmoji(emojiOption)}
+                    onClick={() => setAvatarColor(index)}
                     style={{
-                      fontSize: '2.5rem',
                       width: '60px',
                       height: '60px',
                       borderRadius: '12px',
-                      border: emoji === emojiOption ? '3px solid var(--pastel-pink)' : '2px solid #E8E8E8',
-                      backgroundColor: emoji === emojiOption ? '#FFF' : 'white',
+                      border: avatarColor === index ? '3px solid var(--pastel-pink)' : '2px solid #E8E8E8',
+                      backgroundColor: color.bg,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      fontSize: '1.5rem',
+                      fontWeight: 'bold',
+                      color: color.text
                     }}
                     onMouseEnter={(e) => {
-                      if (emoji !== emojiOption) {
+                      if (avatarColor !== index) {
                         e.target.style.transform = 'scale(1.1)'
                       }
                     }}
@@ -180,18 +195,25 @@ function ProfileSettings() {
                       e.target.style.transform = 'scale(1)'
                     }}
                   >
-                    {emojiOption}
+                    {(nickname || user?.email || 'U').charAt(0).toUpperCase()}
                   </button>
                 ))}
               </div>
               <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                backgroundColor: AVATAR_COLORS[avatarColor].bg,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontSize: '3rem',
-                textAlign: 'center',
-                padding: '1rem',
-                backgroundColor: '#F9F9F9',
-                borderRadius: '12px'
+                fontWeight: 'bold',
+                color: AVATAR_COLORS[avatarColor].text,
+                margin: '0 auto',
+                border: '3px solid var(--pastel-pink)'
               }}>
-                {emoji}
+                {(nickname || user?.email || 'U').charAt(0).toUpperCase()}
               </div>
             </div>
 
