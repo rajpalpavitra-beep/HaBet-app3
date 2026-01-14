@@ -380,60 +380,85 @@ function YourBets() {
                           No friends yet. Add friends to hold you accountable!
                         </p>
                       ) : (
-                        <div style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '0.75rem',
-                          padding: '1rem',
-                          backgroundColor: '#F9F9F9',
-                          borderRadius: '12px',
-                          minHeight: '100px'
-                        }}>
-                          {friends.map((friend) => {
-                            const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
-                            const profile = friend.friendProfile
-                            const isSelected = selectedFriends.includes(friendId)
-
-                            return (
-                              <button
-                                key={friendId}
-                                type="button"
-                                onClick={() => toggleFriend(friendId)}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '0.5rem',
-                                  padding: '0.75rem 1rem',
-                                  borderRadius: '12px',
-                                  border: isSelected ? '2px solid var(--pastel-pink)' : '2px solid #E8E8E8',
-                                  backgroundColor: isSelected ? '#FFF' : 'white',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  fontSize: '1rem'
-                                }}
-                              >
-                                <div style={{
-                                  width: '36px',
-                                  height: '36px',
-                                  borderRadius: '50%',
-                                  backgroundColor: '#F9F9F9',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  fontSize: '1.5rem',
-                                  flexShrink: 0,
-                                  border: '2px solid var(--pastel-purple)',
-                                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)'
-                                }}>
-                                  {profile?.emoji_avatar || '👤'}
-                                </div>
-                                <span>
-                                  {profile?.nickname || profile?.email?.split('@')[0] || 'Friend'}
-                                </span>
-                                {isSelected && <span>✓</span>}
-                              </button>
-                            )
-                          })}
+                        <div style={{ position: 'relative' }}>
+                          <select
+                            multiple
+                            value={selectedFriends}
+                            onChange={(e) => {
+                              const selected = Array.from(e.target.selectedOptions, option => option.value)
+                              setSelectedFriends(selected)
+                            }}
+                            style={{
+                              width: '100%',
+                              minHeight: '120px',
+                              borderRadius: '12px',
+                              border: '2px solid #E8E8E8',
+                              padding: '0.875rem 1.25rem',
+                              fontSize: '1rem',
+                              fontFamily: 'var(--font-handwritten)',
+                              backgroundColor: 'white',
+                              cursor: 'pointer',
+                              appearance: 'none',
+                              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%3E")`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'right 1rem center',
+                              paddingRight: '3rem'
+                            }}
+                          >
+                            {friends.map((friend) => {
+                              const friendId = friend.friendId || (friend.requester_id === user.id ? friend.addressee_id : friend.requester_id)
+                              const profile = friend.friendProfile
+                              const displayName = profile?.nickname || profile?.email?.split('@')[0] || 'Friend'
+                              
+                              return (
+                                <option
+                                  key={friendId}
+                                  value={friendId}
+                                  style={{
+                                    padding: '0.75rem',
+                                    fontSize: '1rem',
+                                    fontFamily: 'var(--font-handwritten)'
+                                  }}
+                                >
+                                  {profile?.emoji_avatar || '👤'} {displayName}
+                                </option>
+                              )
+                            })}
+                          </select>
+                          <p style={{
+                            fontSize: '0.85rem',
+                            color: 'var(--text-light)',
+                            marginTop: '0.5rem',
+                            fontStyle: 'italic'
+                          }}>
+                            Hold Ctrl (Windows) or Cmd (Mac) to select multiple friends
+                          </p>
+                          {selectedFriends.length > 0 && (
+                            <div style={{
+                              marginTop: '0.75rem',
+                              padding: '0.75rem',
+                              backgroundColor: '#F9F9F9',
+                              borderRadius: '12px',
+                              fontSize: '0.9rem',
+                              color: 'var(--text-dark)'
+                            }}>
+                              <strong>Selected ({selectedFriends.length}):</strong>{' '}
+                              {selectedFriends.map((friendId, index) => {
+                                const friend = friends.find(f => {
+                                  const id = f.friendId || (f.requester_id === user.id ? f.addressee_id : f.requester_id)
+                                  return id === friendId
+                                })
+                                const profile = friend?.friendProfile
+                                const displayName = profile?.nickname || profile?.email?.split('@')[0] || 'Friend'
+                                return (
+                                  <span key={friendId}>
+                                    {index > 0 && ', '}
+                                    {profile?.emoji_avatar || '👤'} {displayName}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
