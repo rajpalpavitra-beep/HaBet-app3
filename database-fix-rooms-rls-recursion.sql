@@ -5,28 +5,36 @@
 -- Fix room_members policies (MAIN ISSUE)
 -- ============================================
 
--- Drop existing room_members policies
+-- Drop ALL existing room_members policies
 DROP POLICY IF EXISTS "Users can view room members" ON room_members;
+DROP POLICY IF EXISTS "Users can view their own memberships" ON room_members;
+DROP POLICY IF EXISTS "Room creators can view all members" ON room_members;
 DROP POLICY IF EXISTS "Users can join rooms" ON room_members;
 DROP POLICY IF EXISTS "Users can leave rooms" ON room_members;
 
--- Policy: Users can view their own memberships
--- This avoids recursion by not querying game_rooms within the policy
+-- Create a SECURITY DEFINER function to check if user is room creator
+-- This avoids recursion by using a function that bypasses RLS
+CREATE OR REPLACE FUNCTION is_room_creator(room_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM game_rooms 
+    WHERE id = room_uuid 
+    AND creator_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Policy: Users can view their own memberships (NO subqueries = NO recursion)
 CREATE POLICY "Users can view their own memberships"
   ON room_members FOR SELECT
   USING (user_id = auth.uid());
 
--- Policy: Room creators can view all members of their rooms
--- This uses SECURITY DEFINER to avoid recursion
+-- Policy: Room creators can view all members using the function
+-- The function uses SECURITY DEFINER so it bypasses RLS checks
 CREATE POLICY "Room creators can view all members"
   ON room_members FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM game_rooms 
-      WHERE game_rooms.id = room_members.room_id 
-      AND game_rooms.creator_id = auth.uid()
-    )
-  );
+  USING (is_room_creator(room_id));
 
 -- Policy: Users can join rooms
 CREATE POLICY "Users can join rooms"
