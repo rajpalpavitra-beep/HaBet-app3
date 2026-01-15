@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { to, fromName, inviteLink, appName } = req.body
+    const { to, fromName, inviteLink, appName, roomName } = req.body
 
     if (!to || !inviteLink) {
       return res.status(400).json({ error: 'Missing required fields: to, inviteLink' })
@@ -62,10 +62,10 @@ export default async function handler(req, res) {
               Hi there!
             </p>
             <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 20px;">
-              <strong>${fromName || 'Someone'}</strong> invited you to join <strong>${appName || 'HaBet'}</strong> - a fun way to bet on your habits and stay accountable!
+              <strong>${fromName || 'Someone'}</strong> invited you to join <strong>${appName || 'HaBet'}</strong>${roomName ? ` in the room "${roomName}"` : ''} - a fun way to bet on your habits and stay accountable!
             </p>
             <p style="font-size: 1.1rem; color: #666; line-height: 1.6; margin-bottom: 30px;">
-              Join us and start betting on your habits today!
+              ${roomName ? `Join the "${roomName}" room and ` : ''}Start betting on your habits today!
             </p>
             <div style="text-align: center; margin: 40px 0;">
               <a href="${inviteLink}"
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
     const mailOptions = {
       from: `"${appName || 'HaBet'}" <${gmailUser}>`,
       to: to,
-      subject: `${fromName || 'Someone'} invited you to join ${appName || 'HaBet'}!`,
+      subject: `${fromName || 'Someone'} invited you to join ${appName || 'HaBet'}${roomName ? ` - ${roomName}` : ''}!`,
       html: emailHtml,
     }
 

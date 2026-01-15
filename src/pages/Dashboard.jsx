@@ -48,10 +48,18 @@ function Dashboard() {
         .eq('user_id', user.id)
         .eq('read', false)
 
-      if (error) throw error
-      setUnreadNotifications((data || []).length)
+      if (error) {
+        console.error('Error loading notifications:', error)
+        setUnreadNotifications(0)
+        return
+      }
+      
+      // Only set count if we have valid data
+      const count = (data || []).filter(n => n && n.read === false).length
+      setUnreadNotifications(count)
     } catch (err) {
       console.error('Error loading notifications:', err)
+      setUnreadNotifications(0)
     }
   }
 
@@ -159,7 +167,7 @@ function Dashboard() {
       <div className="container">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center" style={{ gap: '0.75rem' }}>
             <div style={{ 
               width: '32px', 
               height: '32px', 
@@ -177,19 +185,12 @@ function Dashboard() {
             </div>
             <h1 className="handwritten" style={{ margin: 0 }}>HaBet Dashboard</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: '1rem' }}>
             <button
               onClick={() => navigate('/notifications')}
+              className="btn-purple btn-sm"
               style={{
                 position: 'relative',
-                backgroundColor: 'var(--pastel-purple)',
-                color: 'white',
-                borderRadius: '12px',
-                padding: '0.5rem 1rem',
-                fontSize: '0.9rem',
-                fontWeight: '600',
-                border: 'none',
-                cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'

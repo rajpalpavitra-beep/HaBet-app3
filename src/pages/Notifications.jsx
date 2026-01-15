@@ -49,12 +49,20 @@ function Notifications() {
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (error) throw error
+      if (error) {
+        console.error('Error loading notifications:', error)
+        setNotifications([])
+        setUnreadCount(0)
+        return
+      }
       
-      setNotifications(data || [])
-      setUnreadCount((data || []).filter(n => !n.read).length)
+      const notificationsList = (data || []).filter(n => n && n.id) // Filter out any null/invalid entries
+      setNotifications(notificationsList)
+      setUnreadCount(notificationsList.filter(n => n.read === false).length)
     } catch (err) {
       console.error('Error loading notifications:', err)
+      setNotifications([])
+      setUnreadCount(0)
     } finally {
       setLoading(false)
     }
