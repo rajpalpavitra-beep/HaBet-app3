@@ -222,17 +222,79 @@ function GameRooms() {
         throw new Error(errorMessage)
       }
 
-      // Create invite record only if email succeeded
-      const { error: inviteError } = await supabase
+      // Check if invite already exists before creating
+      const { data: existingInvite, error: checkError } = await supabase
         .from('room_invites')
-        .insert([{
-          room_id: roomId,
-          inviter_id: user.id,
-          invitee_email: inviteEmail.trim(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        }])
+        .select('id, status, expires_at')
+        .eq('room_id', roomId)
+        .eq('invitee_email', inviteEmail.trim())
+        .single()
 
-      if (inviteError) throw inviteError
+      if (checkError && checkError.code !== 'PGRST116') {
+        // PGRST116 means no rows found, which is fine
+        throw checkError
+      }
+
+      if (existingInvite) {
+        // Invite already exists
+        if (existingInvite.status === 'pending') {
+          // Check if expired
+          const isExpired = existingInvite.expires_at && new Date(existingInvite.expires_at) < new Date()
+          
+          if (isExpired) {
+            // Update expired invite
+            const { error: updateError } = await supabase
+              .from('room_invites')
+              .update({
+                status: 'pending',
+                expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                inviter_id: user.id
+              })
+              .eq('id', existingInvite.id)
+
+            if (updateError) throw updateError
+          } else {
+            // Invite is still pending and valid
+            inviteState.setSuccess(`Invitation already sent to ${inviteEmail.trim()}! (Still pending)`)
+            setInviteEmail('')
+            setInvitingRoomId(null)
+            setError('')
+            return
+          }
+        } else {
+          // Accepted/rejected - update to resend
+          const { error: updateError } = await supabase
+            .from('room_invites')
+            .update({
+              status: 'pending',
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              inviter_id: user.id
+            })
+            .eq('id', existingInvite.id)
+
+          if (updateError) throw updateError
+        }
+      } else {
+        // Create new invite record only if email succeeded
+        const { error: inviteError } = await supabase
+          .from('room_invites')
+          .insert([{
+            room_id: roomId,
+            inviter_id: user.id,
+            invitee_email: inviteEmail.trim(),
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          }])
+
+        if (inviteError) {
+          // Handle duplicate key error specifically
+          if (inviteError.code === '23505' || inviteError.message.includes('duplicate key')) {
+            inviteState.setError(`${inviteEmail.trim()} has already been invited to this room!`)
+            setError(`${inviteEmail.trim()} has already been invited to this room!`)
+            return
+          }
+          throw inviteError
+        }
+      }
 
       inviteState.setSuccess(`Invitation sent to ${inviteEmail.trim()}!`)
       setInviteEmail('')
