@@ -315,72 +315,58 @@ function GameRooms() {
 
                 {/* Invite Section */}
                 {invitingRoomId === room.id ? (
-                  <div className="flex gap-2" style={{ marginTop: '1rem' }}>
-                    <input
-                      type="email"
-                      placeholder="Enter email to invite"
-                      value={inviteEmail}
-                      onChange={(e) => setInviteEmail(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendRoomInvite(room.id)}
-                      style={{
-                        flex: 1,
-                        borderRadius: '12px',
-                        border: '2px solid #E8E8E8',
-                        padding: '0.75rem 1rem',
-                        fontSize: '0.95rem'
-                      }}
-                    />
-                    <button
-                      onClick={() => sendRoomInvite(room.id)}
-                      disabled={inviteLoading}
-                      style={{
-                        backgroundColor: 'var(--pastel-mint)',
-                        color: 'var(--text-dark)',
-                        borderRadius: '12px',
-                        padding: '0.75rem 1.5rem',
-                        fontSize: '0.95rem',
-                        fontWeight: '600',
-                        border: 'none',
-                        cursor: inviteLoading ? 'not-allowed' : 'pointer',
-                        opacity: inviteLoading ? 0.6 : 1
-                      }}
-                    >
-                      {inviteLoading ? 'Sending...' : 'Send Invite'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setInvitingRoomId(null)
-                        setInviteEmail('')
-                      }}
-                      style={{
-                        backgroundColor: '#E8E8E8',
-                        color: 'var(--text-dark)',
-                        borderRadius: '12px',
-                        padding: '0.75rem 1rem',
-                        fontSize: '0.95rem',
-                        fontWeight: '600',
-                        border: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Cancel
-                    </button>
+                  <div className="flex flex-col gap-2" style={{ marginTop: '1rem' }}>
+                    <div className="flex gap-2" style={{ flexWrap: 'wrap' }}>
+                      <input
+                        type="email"
+                        placeholder="Enter email to invite"
+                        value={inviteEmail}
+                        onChange={(e) => {
+                          setInviteEmail(e.target.value)
+                          inviteState.reset()
+                        }}
+                        onKeyPress={(e) => e.key === 'Enter' && !inviteState.isLoading && sendRoomInvite(room.id)}
+                        style={{
+                          flex: 1,
+                          minWidth: '200px',
+                          borderRadius: '12px',
+                          border: inviteState.isError ? '2px solid var(--error-red)' : '2px solid #E8E8E8',
+                          padding: '0.875rem 1.25rem',
+                          fontSize: '1rem',
+                          fontFamily: 'var(--font-body)',
+                          backgroundColor: 'white'
+                        }}
+                      />
+                      <button
+                        onClick={() => sendRoomInvite(room.id)}
+                        disabled={inviteState.isLoading}
+                        className={`btn-success btn-md ${inviteState.isSuccess ? 'btn-success-state' : ''} ${inviteState.isError ? 'btn-error-state' : ''} ${inviteState.isLoading ? 'btn-loading' : ''}`}
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
+                        {inviteState.isLoading ? 'Sending...' : inviteState.isSuccess ? 'Sent!' : 'Send Invite'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setInvitingRoomId(null)
+                          setInviteEmail('')
+                          inviteState.reset()
+                        }}
+                        className="btn-secondary btn-md"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {inviteState.message && (
+                      <div className={inviteState.isSuccess ? 'success-box' : 'error-box'}>
+                        {inviteState.message}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <button
                     onClick={() => setInvitingRoomId(room.id)}
-                    style={{
-                      width: '100%',
-                      backgroundColor: 'var(--pastel-purple)',
-                      color: 'white',
-                      borderRadius: '12px',
-                      padding: '0.75rem 1.5rem',
-                      fontSize: '0.95rem',
-                      fontWeight: '600',
-                      border: 'none',
-                      cursor: 'pointer',
-                      marginTop: '1rem'
-                    }}
+                    className="btn-purple btn-md"
+                    style={{ width: '100%', marginTop: '1rem' }}
                   >
                     + Invite Friends
                   </button>
