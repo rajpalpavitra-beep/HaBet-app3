@@ -40,7 +40,7 @@ CREATE POLICY "Users can view invites for their rooms"
     )
     OR
     -- Users can see invites sent to their email
-    invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    invitee_email = (auth.jwt() ->> 'email')
   );
 
 CREATE POLICY "Users can create invites for their rooms"
@@ -63,7 +63,7 @@ CREATE POLICY "Users can create invites for their rooms"
 CREATE POLICY "Users can update invites they received"
   ON room_invites FOR UPDATE
   USING (
-    invitee_email = (SELECT email FROM auth.users WHERE id = auth.uid())
+    invitee_email = (auth.jwt() ->> 'email')
   );
 
 -- Create indexes
