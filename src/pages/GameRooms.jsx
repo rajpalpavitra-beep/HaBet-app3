@@ -311,15 +311,23 @@ function GameRooms() {
         }
       }
 
+      // Success! Show message and keep form open briefly so user can see success
       inviteState.setSuccess(`Invitation sent to ${inviteEmail.trim()}!`)
-      setInviteEmail('')
-      setInvitingRoomId(null)
       setError('')
+      
+      // Clear email and close form after a short delay so success message is visible
+      setTimeout(() => {
+        setInviteEmail('')
+        setInvitingRoomId(null)
+      }, 2000) // 2 seconds to see success message
+      
+      console.log('✅ Room invite sent successfully to:', inviteEmail.trim())
     } catch (err) {
-      console.error('Error sending room invite:', err)
+      console.error('❌ Error sending room invite:', err)
       const errorMsg = err.message || 'Failed to send invitation'
       setError(errorMsg)
       inviteState.setError(errorMsg)
+      // Don't close form on error so user can see the error message
     }
   }
 
