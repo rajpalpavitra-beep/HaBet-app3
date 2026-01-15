@@ -123,40 +123,113 @@ function GameRooms() {
         .single()
 
       const userName = profile?.nickname || profile?.display_name || user.email?.split('@')[0] || 'Someone'
-      const inviteLink = `${import.meta.env.VITE_APP_URL || 'https://ha-bet-app3.vercel.app'}/room/${roomId}`
+      const appUrl = import.meta.env.VITE_APP_URL || 'https://ha-bet-app3.vercel.app'
+      const inviteLink = `${appUrl}/room/${roomId}`
       const roomName = roomData?.name || 'a room'
 
-      // Determine email server URL
+      // Determine email server URL (same strategy as Friends page)
       const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1')
-      const emailServerUrl = isProduction
-        ? `${window.location.origin}/api/send-invite-email`
-        : (import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite')
+      let emailServerUrl
 
-      // Send email invite
+      if (isProduction) {
+        // On Vercel, use serverless function
+        emailServerUrl = `${window.location.origin}/api/send-invite-email`
+      } else {
+        // Local dev: use local email server
+        emailServerUrl = import.meta.env.VITE_EMAIL_SERVER_URL || 'http://localhost:3001/send-invite'
+        if (!emailServerUrl.includes('/send-invite')) {
+          emailServerUrl = emailServerUrl.endsWith('/')
+            ? `${emailServerUrl}send-invite`
+            : `${emailServerUrl}/send-invite`
+        }
+      }
+
+      console.log('Room invite email server URL:', emailServerUrl, 'isProduction:', isProduction)
+
       const emailResponse = await fetch(emailServerUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           to: inviteEmail.trim(),
           fromName: userName,
-          inviteLink: inviteLink,
+          inviteLink,
           appName: 'HaBet',
-          roomName: roomName
+          roomName,
         }),
       })
 
-      if (!emailResponse.ok) {
-        throw new Error('Failed to send invite email')
+      let responseText = ''
+      let functionError = null
+
+      try {
+        responseText = await emailResponse.text()
+      } catch (e) {
+        console.warn('Failed to read email response text', e)
       }
 
-      // Create invite record
+      if (!emailResponse.ok) {
+        try {
+          const errorJson = JSON.parse(responseText)
+          functionError = {
+            message: errorJson.message || errorJson.error || `HTTP ${emailResponse.status}: ${emailResponse.statusText}`,
+            status: emailResponse.status,
+          }
+        } catch {
+          functionError = {
+            message: `HTTP ${emailResponse.status}: ${emailResponse.statusText} - ${responseText}`,
+            status: emailResponse.status,
+          }
+        }
+      }
+
+      if (functionError) {
+        console.error('Room invite email server error:', functionError)
+
+        const errorMessage = functionError.message || 'Unknown error'
+        const errorStatus = functionError.status || 'N/A'
+
+        if (!isProduction) {
+          // Local dev helpful hints
+          if (errorStatus === 404 || errorMessage.includes('404') || errorMessage.includes('Failed to fetch')) {
+            alert(
+              `Email Server Not Running (404):\n\n` +
+              `The local email server for room invites is not running.\n\n` +
+              `To fix:\n` +
+              `1. Open a new terminal\n` +
+              `2. Run: npm run email-server\n` +
+              `3. Or run: npm run dev:full (starts app + email server)\n` +
+              `4. Then try sending the room invite again.\n\n` +
+              `Error: ${errorMessage}`
+            )
+          } else {
+            alert(
+              `Error sending room invite (Status: ${errorStatus}):\n\n${errorMessage}\n\n` +
+              `Make sure:\n` +
+              `1. Email server is running (npm run email-server)\n` +
+              `2. Gmail settings in .env are correct\n`
+            )
+          }
+        } else {
+          // Production hints
+          alert(
+            `Error sending room invite (Status: ${errorStatus}):\n\n${errorMessage}\n\n` +
+            `If this keeps happening, check the Vercel function logs for /api/send-invite-email.`
+          )
+        }
+
+        throw new Error(errorMessage)
+      }
+
+      // Create invite record only if email succeeded
       const { error: inviteError } = await supabase
         .from('room_invites')
         .insert([{
           room_id: roomId,
           inviter_id: user.id,
           invitee_email: inviteEmail.trim(),
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
         }])
 
       if (inviteError) throw inviteError
@@ -166,7 +239,7 @@ function GameRooms() {
       setInvitingRoomId(null)
       setError('')
     } catch (err) {
-      console.error('Error sending invite:', err)
+      console.error('Error sending room invite:', err)
       const errorMsg = err.message || 'Failed to send invitation'
       setError(errorMsg)
       inviteState.setError(errorMsg)
