@@ -161,17 +161,24 @@ function GameRooms() {
       })
 
       let responseText = ''
+      let responseData = null
       let functionError = null
 
       try {
         responseText = await emailResponse.text()
+        // Try to parse as JSON
+        try {
+          responseData = JSON.parse(responseText)
+        } catch {
+          // Not JSON, that's okay
+        }
       } catch (e) {
         console.warn('Failed to read email response text', e)
       }
 
       if (!emailResponse.ok) {
         try {
-          const errorJson = JSON.parse(responseText)
+          const errorJson = responseData || JSON.parse(responseText)
           functionError = {
             message: errorJson.message || errorJson.error || `HTTP ${emailResponse.status}: ${emailResponse.statusText}`,
             status: emailResponse.status,
@@ -179,6 +186,14 @@ function GameRooms() {
         } catch {
           functionError = {
             message: `HTTP ${emailResponse.status}: ${emailResponse.statusText} - ${responseText}`,
+            status: emailResponse.status,
+          }
+        }
+      } else {
+        // Email sent successfully - verify response
+        if (responseData && (responseData.error || (!responseData.success && !responseData.messageId))) {
+          functionError = {
+            message: responseData.error || responseData.message || 'Email service returned an error',
             status: emailResponse.status,
           }
         }
